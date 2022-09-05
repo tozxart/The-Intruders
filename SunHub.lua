@@ -1888,7 +1888,7 @@ G:AddButton(
 )
 G:AddButton(
     {Name = "Discord", Callback = function()
-            setclipboard("https://discord.gg/yF4hc2pm")
+            setclipboard("https://discord.gg/vfkD5VCRKU")
         end}
 )
 G:AddTextbox(
