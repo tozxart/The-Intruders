@@ -1466,6 +1466,88 @@ x:AddToggle(
 )
 C:AddToggle(
     {
+        Name = "Summer Event",
+        Default = _G.Settings.Autoclaimquest,
+        Color = Color3.fromRGB(255,215,0),
+        Callback = function(H)
+            _G.Settings.Autoclaimquest = H
+            saveSettings()
+            task.spawn(
+                function()
+                    while task.wait(1) do
+                        if not _G.Settings.Autoclaimquest then
+                            break
+                        end
+                        game:GetService("ReplicatedStorage").RemoteFunctions.MainRemoteFunction:InvokeServer(
+                            "ClaimOnlineReward",
+                            "OnlineReward_1"
+                         
+                         )
+                         game:GetService("ReplicatedStorage").RemoteFunctions.MainRemoteFunction:InvokeServer(
+                            "ClaimOnlineReward",
+                            "OnlineReward_2"
+                         
+                         )
+                         game:GetService("ReplicatedStorage").RemoteFunctions.MainRemoteFunction:InvokeServer(
+                            "ClaimOnlineReward",
+                            "OnlineReward_3"
+                         
+                         )
+                         game:GetService("ReplicatedStorage").RemoteFunctions.MainRemoteFunction:InvokeServer(
+                            "ClaimOnlineReward",
+                            "OnlineReward_4"
+                         
+                         )
+                         game:GetService("ReplicatedStorage").RemoteFunctions.MainRemoteFunction:InvokeServer(
+                            "ClaimOnlineReward",
+                            "OnlineReward_5"
+                         
+                         )
+                         game:GetService("ReplicatedStorage").RemoteFunctions.MainRemoteFunction:InvokeServer(
+                            "ClaimOnlineReward",
+                            "OnlineReward_6"
+                         
+                         )
+                         game:GetService("ReplicatedStorage").RemoteFunctions.MainRemoteFunction:InvokeServer(
+                            "ClaimOnlineReward",
+                            "OnlineReward_7"
+                         
+                         )
+                         game:GetService("ReplicatedStorage").RemoteFunctions.MainRemoteFunction:InvokeServer(
+                            "ClaimOnlineReward",
+                            "OnlineReward_8"
+                         
+                         )
+                         game:GetService("ReplicatedStorage").RemoteFunctions.MainRemoteFunction:InvokeServer(
+                            "ClaimOnlineReward",
+                            "OnlineReward_9"
+                         
+                         )
+                         game:GetService("ReplicatedStorage").RemoteFunctions.MainRemoteFunction:InvokeServer(
+                            "ClaimOnlineReward",
+                            "OnlineReward_10"
+                         
+                         )
+                         game:GetService("ReplicatedStorage").RemoteFunctions.MainRemoteFunction:InvokeServer(
+                            "ClaimOnlineReward",
+                            "OnlineReward_11"
+                         
+                         )
+                         game:GetService("ReplicatedStorage").RemoteFunctions.MainRemoteFunction:InvokeServer(
+                            "ClaimOnlineReward",
+                            "OnlineReward_12"
+                         
+                         )
+                                                                                                                                                                                                                                                                                                            
+                         
+                    end
+                end
+            )
+        end
+    }
+)
+C:AddToggle(
+    {
         Name = "Daily Quest",
         Default = _G.Settings.Autoclaimquest,
         Color = Color3.fromRGB(255,215,0),
@@ -1907,3 +1989,4 @@ G:AddLabel("LastestUpdate : 9/05/2022 ")
 
 u:MakeNotification({Name = "☀️ Sun Hub ☀️", Content = "Game: Anime Dimension", Time = 15})
 u:Init()
+
