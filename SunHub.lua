@@ -1175,6 +1175,32 @@ B:AddToggle(
         end
     }
 )
+
+B:AddToggle(
+    {
+        Name = "Summer Spin",
+        Default = _G.Settings.SummerSpin,
+        Color = Color3.fromRGB(255,215,0),
+        Callback = function(H)
+            _G.Settings.SummerSpin = H
+            saveSettings()
+            task.spawn(
+                function()
+                    while task.wait(1) do
+                        if not _G.Settings.SummerSpin then
+                            break
+                        end
+                        game:GetService("ReplicatedStorage").RemoteFunctions.MainRemoteFunction:InvokeServer(
+                            "SpinEventReward"
+                        )
+                    end
+                end
+            )
+        end
+    }
+)
+
+
 z:AddTextbox(
     {Name = "Webhook Url", Default = _G.Settings.webhookurl, TextDisappear = false, Callback = function(H)
             _G.Settings.webhookurl = H
@@ -1467,15 +1493,15 @@ x:AddToggle(
 C:AddToggle(
     {
         Name = "Summer Event",
-        Default = _G.Settings.Autoclaimquest,
+        Default = _G.Settings.SummerEvent,
         Color = Color3.fromRGB(255,215,0),
         Callback = function(H)
-            _G.Settings.Autoclaimquest = H
+            _G.Settings.SummerEvent = H
             saveSettings()
             task.spawn(
                 function()
                     while task.wait(1) do
-                        if not _G.Settings.Autoclaimquest then
+                        if not _G.Settings.SummerEvent then
                             break
                         end
                         game:GetService("ReplicatedStorage").RemoteFunctions.MainRemoteFunction:InvokeServer(
