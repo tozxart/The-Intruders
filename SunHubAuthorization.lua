@@ -26,7 +26,7 @@ _G.Settings = {
     autosellepic = false,
     selectegg = "None",
     autoselllegendary = false,
-    autoequipbest = false,
+    autoequipbest = true,
     autoupgrade = false,
     Height = 20,
     Height1 = -20,
@@ -59,7 +59,7 @@ _G.Settings = {
     webhook = false,
     raidwebhook = false,
     Autoraid = false,
-    kickrejoin = false
+    kickrejoin = true
 }
 
 if game.PlaceId == 6938803436 or game.PlaceId == 7338881230 or game.PlaceId == 6990129309 or game.PlaceId == 7274690025 or game.PlaceId == 6990133340 then
