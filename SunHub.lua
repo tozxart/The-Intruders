@@ -1969,8 +1969,8 @@ G:AddButton(
         end}
 )
 G:AddButton(
-    {Name = "Updating By Tozxart", Callback = function()
-            setclipboard("Sun Hub")
+    {Name = "Updating And More Features By Tozxart", Callback = function()
+            setclipboard("ToZx#1217")
         end}
 )
 G:AddButton(
