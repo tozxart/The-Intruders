@@ -455,6 +455,7 @@ w:AddToggle(
                             game:GetService("ReplicatedStorage").RemoteFunctions.MainRemoteFunction:InvokeServer(
                                 "TeleportPlayers"
                             )
+                            
                         end
                     end
                 end
@@ -752,6 +753,41 @@ w:AddToggle(
     }
 )
 
+w:AddToggle(
+    {
+        Name = "🌀 Reselect Characters",
+        Default = _G.Settings.Reselect,
+        Color = Color3.fromRGB(255,215,0),
+        Callback = function(H)
+            _G.Settings.Reselect = H
+            saveSettings()
+            task.spawn(
+                function()
+                    while task.wait(20) do
+                        if not _G.Settings.Reselect then
+                            break
+                        end
+                         game:GetService("ReplicatedStorage").RemoteFunctions.MainRemoteFunction:InvokeServer(
+                             "EquipCharacter",
+                             "Uzui"
+                         )
+                         game:GetService("ReplicatedStorage").RemoteFunctions.MainRemoteFunction:InvokeServer(
+                             "EquipCharacterAssist",
+                             "Shanks",
+                             1
+                         )
+                         game:GetService("ReplicatedStorage").RemoteFunctions.MainRemoteFunction:InvokeServer(
+                             "EquipCharacterAssist",
+                             "Obito",
+                             2
+                         )
+                    end
+                end
+            )
+        end
+    }
+)
+w:AddLabel("☝️ This only works with Tengu, Shanks and Obito for now") 
 A:AddToggle(
     {
         Name = "Auto Sell Common",
@@ -1148,6 +1184,21 @@ y:AddDropdown(
 y:AddDropdown(
     {Name = "Select Raid", Default = _G.Settings.Raidselectmap, Options = t, Callback = function(H)
             _G.Settings.Raidselectmap = H
+            saveSettings()
+        end}
+)
+local m = {"Deku", "Naruto", "Luffy", "Goku", "Gray", "Sasuke", "Akaza", "Asta", "Killua", "Natsu", "Sakura", "Accelerator", "Deku","Goku","Ichigo"}
+y:AddDropdown(
+    {Name = "Select Main Character", Default = _G.Settings.ReselectMainCharacters, Options = m, Callback = function(H)
+            _G.Settings.ReselectMainCharacters = H
+            if H then
+                      game:GetService("ReplicatedStorage").RemoteFunctions.MainRemoteFunction:InvokeServer(
+                            "EquipCharacter",
+                            {
+                                ["MainCharacter"] = H,
+                            }
+                        )
+            end
             saveSettings()
         end}
 )
@@ -2015,4 +2066,3 @@ G:AddLabel("LastestUpdate : 9/05/2022 ")
 
 u:MakeNotification({Name = "☀️ Sun Hub ☀️", Content = "Game: Anime Dimension", Time = 15})
 u:Init()
-
