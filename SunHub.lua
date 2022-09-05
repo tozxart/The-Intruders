@@ -1,8 +1,3 @@
-game:GetService("Players").LocalPlayer.OnTeleport:Connect(function(State)
-    if State == Enum.TeleportState.Started then
-        syn.queue_on_teleport(" loadstring(game:HttpGet("https://raw.githubusercontent.com/tozxart/SunHub/main/SunHub.lua"))()")
-    end
-end)
 if not game:IsLoaded() then
     game.Loaded:Wait()
 end
