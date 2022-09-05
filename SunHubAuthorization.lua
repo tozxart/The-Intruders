@@ -1,5 +1,7 @@
 repeat wait() until game:IsLoaded()
 _G.Settings = {
+    SummerEvent = false,
+    SummerSpin = false,
     farmraidtoken = false,
     skilldelay = 1,
     Raidselectmap = "None",
