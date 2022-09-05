@@ -1,3 +1,8 @@
+game:GetService("Players").LocalPlayer.OnTeleport:Connect(function(State)
+    if State == Enum.TeleportState.Started then
+        syn.queue_on_teleport(" loadstring(game:HttpGet("https://raw.githubusercontent.com/tozxart/SunHub/main/SunHub.lua"))()")
+    end
+end)
 if not game:IsLoaded() then
     game.Loaded:Wait()
 end
@@ -1883,6 +1888,11 @@ w:AddLabel("‼️ Specific + Raid + Boss Rush ")
 w:AddLabel("‼️ Trial + Raid + Boss Rush ")
 G:AddButton(
     {Name = "Script by Sun Hub", Callback = function()
+            setclipboard("Sun Hub")
+        end}
+)
+G:AddButton(
+    {Name = "Updating By Tozxart", Callback = function()
             setclipboard("Sun Hub")
         end}
 )
