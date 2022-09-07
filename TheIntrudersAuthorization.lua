@@ -1,5 +1,8 @@
 repeat wait() until game:IsLoaded()
 _G.Settings = {
+    Autoleave = true,
+    kickrejoin = true,
+    LeaveDungeons = true,
     SummerEvent = false,
     SummerSpin = false,
     farmraidtoken = false,
