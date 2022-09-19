@@ -1,8 +1,8 @@
 repeat wait() until game:IsLoaded()
 _G.Settings = {
-    Autoleave = true,
-    kickrejoin = true,
-    LeaveDungeons = true,
+    Autoleave = false,
+    kickrejoin = false,
+    LeaveDungeons = false,
     SummerEvent = false,
     SummerSpin = false,
     farmraidtoken = false,
@@ -10,7 +10,7 @@ _G.Settings = {
     Raidselectmap = "None",
     distance = 10,
     toggleguikey = "z",
-    Hardcore = false,
+    Hardcore = true,
     afkandraid = false,
     autospingem = false,
     autoclaimrewardraid = false,
@@ -64,7 +64,6 @@ _G.Settings = {
     Autoraid = false,
     kickrejoin = true
 }
-
 if game.PlaceId == 6938803436 or game.PlaceId == 7338881230 or game.PlaceId == 6990129309 or game.PlaceId == 7274690025 or game.PlaceId == 6990131029 or game.PlaceId == 6990133340 then
     pcall(function()
            loadstring(game:HttpGet("https://raw.githubusercontent.com/tozxart/SunHub/main/TheIntruders.lua"))()
