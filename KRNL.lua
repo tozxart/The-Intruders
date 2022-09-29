@@ -1,10 +1,14 @@
+_G.Settings = {
+    CustomDifficulty = "Easy", -- "Nightmare"-"Hard"-"Easy"
+    Hardcore = true,
+    FriendsOnly = true,
+    custommapselect = "Titan Dimension"
+}
+
 
             task.spawn(
                 function()
                     while task.wait(1) do
-                        if not _G.Settings.Autospeedraid then
-                            break
-                        end
                         wait()
                         local Y = math.random(1, #p)
                         local Z = p[Y]
@@ -15,12 +19,10 @@
                     end
                 end
             )
+
             task.spawn(
                 function()
                     while task.wait(3) do
-                        if not _G.Settings.Autoraid then
-                            break
-                        end
                         game:GetService("ReplicatedStorage").RemoteFunctions.MainRemoteFunction:InvokeServer(
                             "CreateRoom",
                             {
@@ -39,9 +41,6 @@
             task.spawn(
                 function()
                     while task.wait(10) do
-                        if not _G.Settings.Autocustom then
-                            break
-                        end
                         game:GetService("ReplicatedStorage").RemoteFunctions.MainRemoteFunction:InvokeServer(
                             "CreateRoom",
                             {
