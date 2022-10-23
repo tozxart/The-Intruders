@@ -1,4 +1,5 @@
 repeat wait() until game:IsLoaded()
+
 _G.Settings = {
     Autotrial  =false,
     antilag = false,
@@ -12,6 +13,7 @@ _G.Settings = {
     SummerSpin = false,
     farmraidtoken = false,
     skilldelay = 1,
+    allskills = true,
     Raidselectmap = "None",
     distance = 10,
     toggleguikey = "z",
