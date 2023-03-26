@@ -24,6 +24,9 @@ local games = {
     Kaizen = {
         7525610732,
     },
+        AnimeLostSimulator = {
+        12413786484,
+    },
     SwordSim = {
         11040063484,
     },
