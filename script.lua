@@ -1,5 +1,5 @@
 repeat wait() until game:IsLoaded()
-local rs = "https://raw.githubusercontent.com/lifaiossama/errors/main/"
+local rs = "https://raw.githubusercontent.com/tozxart/The-Intruders/main/"
 
 local games = {
     ADS = {
