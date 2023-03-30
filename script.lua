@@ -30,6 +30,9 @@ local games = {
     SwordSim = {
         11040063484,
     },
+    NinjaLegends = {
+        3956818381,
+    },
     WFS = {
         2046084258,
         1769922392,
