@@ -24,6 +24,9 @@ local games = {
     Kaizen = {
         7525610732,
     },
+        Warriot = {
+        8425128940,
+    },
         AnimeLostSimulator = {
         12413786484,
     },
