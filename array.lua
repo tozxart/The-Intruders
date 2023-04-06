@@ -1,7 +1,7 @@
 --[[
 
 ArrayField Interface Suite
-by Meta
+by Arrays
 
 Original by Sirius
 
@@ -119,6 +119,9 @@ local LocalPlayer = game:GetService('Players').LocalPlayer
 -- Interface Management
 local Rayfield = game:GetObjects("rbxassetid://11637506633")[1]
 
+-- Tasks
+local spawn = task.spawn
+
 --studio
 if game["Run Service"]:IsStudio() then
 	function gethui() return Rayfield end local http_request = nil local syn = {protect_gui = false,request = false,}local http = nil function writefile(tt,t,ttt)end function isfolder(t)end function makefolder(t)end function isfile(r)end function readfile(t)end
@@ -178,7 +181,6 @@ local clicked = false
 local SearchHided = true
 local SideBarClosed = true
 local BarType = 'Top'
-local HoverTime = 0.3
 local Notifications = Rayfield.Notifications
 
 local SelectedTheme = RayfieldLibrary.Theme.Default
@@ -1241,6 +1243,7 @@ function RayfieldLibrary:CreateWindow(Settings)
 			KeyMain.Hide.ImageTransparency = 1
 			KeyMain.HideP.ImageTransparency = 1
 
+
 			TweenService:Create(KeyMain, TweenInfo.new(0.6, Enum.EasingStyle.Quint), {BackgroundTransparency = 0}):Play()
 			TweenService:Create(KeyMain, TweenInfo.new(0.6, Enum.EasingStyle.Quint), {Size = UDim2.new(0, 500, 0, 187)}):Play()
 			TweenService:Create(KeyMain.EShadow, TweenInfo.new(0.5, Enum.EasingStyle.Quint), {ImageTransparency = 0.5}):Play()
@@ -2091,6 +2094,7 @@ function RayfieldLibrary:CreateWindow(Settings)
 					Option = DropdownOption,
 					Selected = false
 				}
+				print(DropdownSettings.Items)
 				local OptionInTable = DropdownSettings.Items[Option]
 				DropdownOption.Name = Option.Name or Option
 				DropdownOption.Title.Text = Option.Name or Option
@@ -2211,18 +2215,29 @@ function RayfieldLibrary:CreateWindow(Settings)
 			
             --fix
 			function DropdownSettings:Set(NewOption)
-								if typeof(NewOption) == 'table' then
+			for _,Option in ipairs(DropdownSettings.Items.Selected) do
+			 local DropdownOption = Option.Option
+			 Option.Selected = false
+			 if Dropdown.Visible then
+			 DropdownOption.BackgroundTransparency = 0
+			 DropdownOption.UIStroke.Transparency = 0
+			 DropdownOption.Title.TextTransparency = 0
+			 else
+			 DropdownOption.BackgroundTransparency = 1
+			 DropdownOption.UIStroke.Transparency = 1
+			 DropdownOption.Title.TextTransparency = 1
+			 end
+
+			end
+				if typeof(NewOption) ~= 'table' then
+					DropdownSettings.Items.Selected = {NewOption}
+				    NewOption = {NewOption}
+				end
+				local Confirmed = {}
 				for _,o in pairs(NewOption) do
-end
-					if typeof(NewOption) == 'table' then
-						
-						DropdownSettings.Items.Selected = NewOption
-					else
-						DropdownSettings.Items.Selected = {NewOption}
-					end
 					local Success, Response = pcall(function()
 						DropdownSettings.Callback(NewOption)
-					end)
+					 end)
 					if not Success then
 						TweenService:Create(Dropdown, TweenInfo.new(0.6, Enum.EasingStyle.Quint), {BackgroundColor3 = Color3.fromRGB(85, 0, 0)}):Play()
 						TweenService:Create(Dropdown.UIStroke, TweenInfo.new(0.6, Enum.EasingStyle.Quint), {Transparency = 1}):Play()
@@ -2233,8 +2248,10 @@ end
 						TweenService:Create(Dropdown, TweenInfo.new(0.6, Enum.EasingStyle.Quint), {BackgroundColor3 = SelectedTheme.ElementBackground}):Play()
 						TweenService:Create(Dropdown.UIStroke, TweenInfo.new(0.6, Enum.EasingStyle.Quint), {Transparency = 0}):Play()
 					end
-					if DropdownSettings.Items[NewOption] then
-						local DropdownOption =  DropdownSettings.Items[NewOption]
+					if DropdownSettings.Items[o] then
+					DropdownSettings.Items[o].Selected = true
+					Confirmed[o] = o
+						local DropdownOption =  DropdownSettings.Items[o].Option
 						DropdownOption.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
 						
 						if Dropdown.Visible then
@@ -2249,6 +2266,8 @@ end
 						
 					end
 				end
+				DropdownSettings.Items.Selected = Confirmed
+				RefreshSelected()
 				--Dropdown.Selected.Text = NewText
 			end
 			function DropdownSettings:Error(text)
@@ -2463,6 +2482,7 @@ end
 			function KeybindSettings:Visible(bool)
 				Keybind.Visible = bool
 			end
+
 			if Settings.ConfigurationSaving then
 				if Settings.ConfigurationSaving.Enabled and KeybindSettings.Flag then
 					RayfieldLibrary.Flags[KeybindSettings.Flag] = KeybindSettings
@@ -3310,4 +3330,5 @@ function RayfieldLibrary:LoadConfiguration()
 	end
 end
 task.delay(9, RayfieldLibrary.LoadConfiguration, RayfieldLibrary)
+
 return RayfieldLibrary
