@@ -2154,7 +2154,7 @@ function RayfieldLibrary:CreateWindow(Settings)
 					
 					local Success, Response = pcall(function()
 						if Multi then
-							DropdownSettings.Callback(DropdownSettings.Items.Selected, Option)
+							DropdownSettings.Callback({Option})
 						else
 							DropdownSettings.Callback(Option)
 						end
