@@ -2106,7 +2106,7 @@ function RayfieldLibrary:CreateWindow(Settings)
 						Selecteds = {Selecteds}
 					end
 					for index,Selected in pairs(Selecteds) do
-						if Selected == Option then
+						if Selected == Option.Name or Selected == Option then
 							IsSelected = true
 							OptionInTable.Selected = true
 							table.insert(DropdownSettings.Items.Selected,OptionInTable)
@@ -2215,31 +2215,61 @@ function RayfieldLibrary:CreateWindow(Settings)
 			
             --fix
 			function DropdownSettings:Set(NewOption)
-    for _, Option in ipairs(DropdownSettings.Items.Selected) do
-        local DropdownOption = Option.Option
-        Option.Selected = false
-        DropdownOption.BackgroundTransparency = 0
-        DropdownOption.UIStroke.Transparency = 0
-        DropdownOption.Title.TextTransparency = 0
-    end
+			for _,Option in ipairs(DropdownSettings.Items) do
+			 local DropdownOption = Option.Option
+			 Option.Selected = false
+			 if Dropdown.Visible then
+			 DropdownOption.BackgroundTransparency = 0
+			 DropdownOption.UIStroke.Transparency = 0
+			 DropdownOption.Title.TextTransparency = 0
+			 else
+			 DropdownOption.BackgroundTransparency = 1
+			 DropdownOption.UIStroke.Transparency = 1
+			 DropdownOption.Title.TextTransparency = 1
+			 end
 
-    local Confirmed = {}
-    if typeof(NewOption) ~= 'table' then
-        NewOption = {NewOption}
-    end
-
-    for _, o in pairs(NewOption) do
-        if DropdownSettings.Items[o] then
-            DropdownSettings.Items[o].Selected = true
-            Confirmed[#Confirmed + 1] = DropdownSettings.Items[o]
-            local DropdownOption = DropdownSettings.Items[o].Option
-            DropdownOption.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
-        end
-    end
-
-    DropdownSettings.Items.Selected = Confirmed
-    RefreshSelected()
-end
+			end
+				if typeof(NewOption) ~= 'table' then
+					DropdownSettings.Items.Selected = {NewOption}
+				    NewOption = {NewOption}
+				end
+				local Confirmed = {}
+				for _,o in pairs(NewOption) do
+					local Success, Response = pcall(function()
+						DropdownSettings.Callback(NewOption)
+					 end)
+					if not Success then
+						TweenService:Create(Dropdown, TweenInfo.new(0.6, Enum.EasingStyle.Quint), {BackgroundColor3 = Color3.fromRGB(85, 0, 0)}):Play()
+						TweenService:Create(Dropdown.UIStroke, TweenInfo.new(0.6, Enum.EasingStyle.Quint), {Transparency = 1}):Play()
+						Dropdown.Title.Text = "Callback Error"
+						print("Rayfield | "..DropdownSettings.Name.." Callback Error " ..tostring(Response))
+						wait(0.5)
+						Dropdown.Title.Text = DropdownSettings.Name
+						TweenService:Create(Dropdown, TweenInfo.new(0.6, Enum.EasingStyle.Quint), {BackgroundColor3 = SelectedTheme.ElementBackground}):Play()
+						TweenService:Create(Dropdown.UIStroke, TweenInfo.new(0.6, Enum.EasingStyle.Quint), {Transparency = 0}):Play()
+					end
+					if DropdownSettings.Items[o] then
+					DropdownSettings.Items[o].Selected = true
+					Confirmed[o] = o
+						local DropdownOption =  DropdownSettings.Items[o].Option
+						DropdownOption.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+						
+						if Dropdown.Visible then
+							DropdownOption.BackgroundTransparency = 0
+							DropdownOption.UIStroke.Transparency = 0
+							DropdownOption.Title.TextTransparency = 0
+						else
+							DropdownOption.BackgroundTransparency = 1
+							DropdownOption.UIStroke.Transparency = 1
+							DropdownOption.Title.TextTransparency = 1
+						end
+						
+					end
+				end
+				DropdownSettings.Items.Selected = Confirmed
+				RefreshSelected()
+				--Dropdown.Selected.Text = NewText
+			end
 			function DropdownSettings:Error(text)
 				Error(text)
 			end
