@@ -2144,11 +2144,15 @@ function RayfieldLibrary:CreateWindow(Settings)
 						DropdownSettings.Items.Selected[1].Selected = false
 						TweenService:Create(DropdownSettings.Items.Selected[1].Option, TweenInfo.new(0.3, Enum.EasingStyle.Quint), {BackgroundColor3 = Color3.fromRGB(30, 30, 30)}):Play()
 					end
-					if not (Multi) then
-						DropdownSettings.Items.Selected = {OptionInTable}
+					if not Multi then
+						DropdownSettings.Items.Selected = {Option.Name or Option}
 						Dropdown.Selected.Text = Option.Name or Option
 					else
-						table.insert(DropdownSettings.Items.Selected,OptionInTable)
+						if OptionInTable.Selected then
+							table.remove(DropdownSettings.Items.Selected, table.find(DropdownSettings.Items.Selected, Option.Name or Option))
+						else
+							table.insert(DropdownSettings.Items.Selected, Option.Name or Option)
+						end
 						RefreshSelected()
 					end
 					
