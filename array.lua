@@ -2154,11 +2154,12 @@ function RayfieldLibrary:CreateWindow(Settings)
 					
 					local Success, Response = pcall(function()
 						if Multi then
-							DropdownSettings.Callback({Option})
+							DropdownSettings.Callback(DropdownSettings.Items.Selected)
 						else
 							DropdownSettings.Callback(Option)
 						end
-										end)
+						
+					end)
 					if not Success then
 						Error('Callback Error')
 						print("Rayfield | "..DropdownSettings.Name.." Callback Error " ..tostring(Response))
