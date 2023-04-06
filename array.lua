@@ -1945,7 +1945,6 @@ function RayfieldLibrary:CreateWindow(Settings)
 
 		-- Dropdown
 		function Tab:CreateDropdown(DropdownSettings)
-		print('no')
 			local Dropdown = Elements.Template.Dropdown:Clone()
 			local SearchBar = Dropdown.List["-SearchBar"]
 			local Required = 1
