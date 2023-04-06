@@ -2156,6 +2156,9 @@ function RayfieldLibrary:CreateWindow(Settings)
 						RefreshSelected()
 					end
 					
+					OptionInTable.Selected = not OptionInTable.Selected
+					
+					
 					local Success, Response = pcall(function()
 						if Multi then
 							DropdownSettings.Callback(DropdownSettings.Items.Selected)
