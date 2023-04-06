@@ -1996,7 +1996,7 @@ function RayfieldLibrary:CreateWindow(Settings)
 				if #DropdownSettings.Items.Selected > 1 then
 					local NT = {}
 					for _,kj in ipairs(DropdownSettings.Items.Selected) do
-						NT[#NT+1] = kj.Option.Name
+						NT[#NT+1] = kj.Option.Name or kj
 					end
 					Dropdown.Selected.Text = table.concat(NT, ", ")
 				elseif DropdownSettings.Items.Selected[1] then
