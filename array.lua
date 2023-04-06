@@ -2132,75 +2132,37 @@ function RayfieldLibrary:CreateWindow(Settings)
 				DropdownOption.Interact.ZIndex = 50
 				DropdownOption.Interact.MouseButton1Click:Connect(function()
 					if DropdownSettings.Locked then return end
-					if OptionInTable.Selected then
-						OptionInTable.Selected = false
-						table.remove(DropdownSettings.Items.Selected,table.find(DropdownSettings.Items.Selected,OptionInTable))
-						RefreshSelected()
-						TweenService:Create(DropdownOption, TweenInfo.new(0.3, Enum.EasingStyle.Quint), {BackgroundColor3 = Color3.fromRGB(30, 30, 30)}):Play()
-						SaveConfiguration()
-						return
-					end
-					if not Multi and DropdownSettings.Items.Selected[1] then
-						DropdownSettings.Items.Selected[1].Selected = false
-						TweenService:Create(DropdownSettings.Items.Selected[1].Option, TweenInfo.new(0.3, Enum.EasingStyle.Quint), {BackgroundColor3 = Color3.fromRGB(30, 30, 30)}):Play()
-					end
+				
+					OptionInTable.Selected = not OptionInTable.Selected
+				
 					if not Multi then
 						DropdownSettings.Items.Selected = {Option.Name or Option}
 						Dropdown.Selected.Text = Option.Name or Option
 					else
 						if OptionInTable.Selected then
-							table.remove(DropdownSettings.Items.Selected, table.find(DropdownSettings.Items.Selected, Option.Name or Option))
-						else
 							table.insert(DropdownSettings.Items.Selected, Option.Name or Option)
+						else
+							table.remove(DropdownSettings.Items.Selected, table.find(DropdownSettings.Items.Selected, Option.Name or Option))
 						end
 						RefreshSelected()
 					end
-					
-					OptionInTable.Selected = not OptionInTable.Selected
-					
-					
+				
 					local Success, Response = pcall(function()
-						if Multi then
-							DropdownSettings.Callback(DropdownSettings.Items.Selected)
-						else
-							DropdownSettings.Callback(Option)
-						end
-						
+						DropdownSettings.Callback(DropdownSettings.Items.Selected)
 					end)
 					if not Success then
 						Error('Callback Error')
 						print("Rayfield | "..DropdownSettings.Name.." Callback Error " ..tostring(Response))
 					end
-					
-					OptionInTable.Selected = true
-					
-					if not (Multi) then
-						for _,op in ipairs(DropdownSettings.Items.Selected) do
-							TweenService:Create(op.Option, TweenInfo.new(0.3, Enum.EasingStyle.Quint), {BackgroundColor3 = Color3.fromRGB(30, 30, 30)}):Play()
-						end
-					end
-					TweenService:Create(DropdownOption.UIStroke, TweenInfo.new(0.3, Enum.EasingStyle.Quint), {Transparency = 1}):Play()
-					TweenService:Create(DropdownOption, TweenInfo.new(0.3, Enum.EasingStyle.Quint), {BackgroundColor3 = Color3.fromRGB(40, 40, 40)}):Play()
-					Debounce = true
-					wait(0.2)
-					TweenService:Create(DropdownOption.UIStroke, TweenInfo.new(0.3, Enum.EasingStyle.Quint), {Transparency = 0}):Play()
-					wait(0.1)
+				
 					if not Multi then
-						TweenService:Create(Dropdown, TweenInfo.new(0.5, Enum.EasingStyle.Quint), {Size = UDim2.new(0,465, 0, 45)}):Play()
 						for _, DropdownOpt in ipairs(Dropdown.List:GetChildren()) do
 							if DropdownOpt.ClassName == "Frame" and DropdownOpt ~= Dropdown.List.PlaceHolder and DropdownOpt ~= SearchBar then
-								TweenService:Create(DropdownOpt, TweenInfo.new(0.3, Enum.EasingStyle.Quint), {BackgroundTransparency = 1}):Play()
-								TweenService:Create(DropdownOpt.UIStroke, TweenInfo.new(0.3, Enum.EasingStyle.Quint), {Transparency = 1}):Play()
-								TweenService:Create(DropdownOpt.Title, TweenInfo.new(0.3, Enum.EasingStyle.Quint), {TextTransparency = 1}):Play()
 							end
 						end
-						TweenService:Create(Dropdown.List, TweenInfo.new(0.3, Enum.EasingStyle.Quint), {ScrollBarImageTransparency = 1}):Play()
-						TweenService:Create(Dropdown.Toggle, TweenInfo.new(0.7, Enum.EasingStyle.Quint), {Rotation = 180}):Play()	
 						wait(0.35)
 						Dropdown.List.Visible = false
-						
 					end
-					Debounce = false
 					SaveConfiguration()
 				end)
 			end
