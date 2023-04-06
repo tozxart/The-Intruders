@@ -1942,7 +1942,6 @@ function RayfieldLibrary:CreateWindow(Settings)
 			end
 			return InputSettings
 		end
-
 		-- Dropdown
 		function Tab:CreateDropdown(DropdownSettings)
 			local Dropdown = Elements.Template.Dropdown:Clone()
