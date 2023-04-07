@@ -886,8 +886,6 @@ function RayfieldLibrary:CreateWindow(Settings)
 	Main.Shadow.Image.ImageTransparency = 1
 	LoadingFrame.Version.TextTransparency = 1
 	LoadingFrame.Title.Text = Settings.LoadingTitle or "Rayfield Interface Suite"
-	LoadingFrame.Version.Text = ("Version "..Settings.Version) or "Version N/A"
-	LoadingFrame.Thumbnail.Image = "rbxassetid://"..Settings.Image
 	Topbar.Visible = false
 	Elements.Visible = false
 	LoadingFrame.Visible = true
