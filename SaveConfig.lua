@@ -7,18 +7,26 @@ function Data.new(folderName, data)
         makefolder(folderName)
     end
 
-    local savedData, errorMsg = pcall(function()
-        return Http:JSONDecode(readfile(folderName .. "/Settings.json"))
-    end)
+    local savedData
 
-    if savedData then
+    if isfile(folderName .. "/Settings.json") then
+        local success, result = pcall(function()
+            return Http:JSONDecode(readfile(folderName .. "/Settings.json"))
+        end)
+
+        if success then
+            savedData = result
+        end
+    end
+
+    if not savedData then
+        savedData = data
+    else
         for i, v in pairs(data) do
             if not savedData[i] then
                 savedData[i] = v
             end
         end
-    else
-        savedData = data
     end
 
     return setmetatable({
