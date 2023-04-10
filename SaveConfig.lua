@@ -51,6 +51,18 @@ function Data.new(folderName, fileName, data)
     })
 end
 
+function DataFunctions:ResetToDefaults(defaultData)
+    for i, v in pairs(defaultData) do
+        self.Data[i] = v
+    end
+    writefile(self.FolderName .. "/" .. self.FileName, Http:JSONEncode(self.Data))
+end
+function DataFunctions:Update(data)
+    for i, v in pairs(data) do
+        self.Data[i] = v
+    end
+    writefile(self.FolderName .. "/" .. self.FileName, Http:JSONEncode(self.Data))
+end
 
 function DataFunctions:Set(name, value)
     local success, errorMsg = pcall(function()
