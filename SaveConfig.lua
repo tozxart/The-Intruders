@@ -29,6 +29,19 @@ function Data.new(folderName, fileName, data)
         end
     end
 
+    -- Check for missing default settings and update the file if needed
+    local shouldUpdateFile = false
+    for i, v in pairs(data) do
+        if savedData[i] == nil then
+            savedData[i] = v
+            shouldUpdateFile = true
+        end
+    end
+
+    if shouldUpdateFile then
+        writefile(folderName .. "/" .. fileName, Http:JSONEncode(savedData))
+    end
+
     return setmetatable({
         Data = savedData,
         FolderName = folderName,
@@ -37,6 +50,7 @@ function Data.new(folderName, fileName, data)
         __index = DataFunctions
     })
 end
+
 
 function DataFunctions:Set(name, value)
     local success, errorMsg = pcall(function()
