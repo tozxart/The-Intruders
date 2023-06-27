@@ -21,20 +21,11 @@ local games = {
         6911385724,
         6990133340,
     },
-    Kaizen = {
-        7525610732,
-    },
-        Warriot = {
-        8425128940,
-    },
         AnimeLostSimulator = {
         12413786484,
     },
     SwordSim = {
         11040063484,
-    },
-    NinjaLegends = {
-        3956818381,
     },
     ACS = {
         12135645852,
