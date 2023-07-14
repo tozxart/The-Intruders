@@ -24,6 +24,9 @@ local games = {
         AnimeLostSimulator = {
         12413786484,
     },
+    AnimeLegacy = {
+        13983468332,
+    },
     SwordSim = {
         11040063484,
     },
