@@ -1,5 +1,7 @@
 repeat wait() until game:IsLoaded()
+
 local rs = "https://raw.githubusercontent.com/tozxart/The-Intruders/main/"
+local specificScriptURL = 'https://scripts.luawl.com/hosted/3498/20575/TheIntruders.lua'
 
 local games = {
     ADS = {
@@ -57,12 +59,21 @@ local games = {
 }
 
 local placeId = game.PlaceId
+local useSpecificScript = false
 
 for scriptName, gameIds in pairs(games) do
     for _, gameId in ipairs(gameIds) do
         if gameId == placeId then
-            loadstring(game:HttpGet(rs .. scriptName .. ".lua"))()
+            if scriptName == "ADS" then
+                useSpecificScript = true
+            else
+                loadstring(game:HttpGet(rs .. scriptName .. ".lua"))()
+            end
             break
         end
     end
+end
+
+if useSpecificScript then
+    loadstring(game:HttpGet(specificScriptURL))()
 end
