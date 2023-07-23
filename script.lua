@@ -64,7 +64,7 @@ local useSpecificScript = false
 for scriptName, gameIds in pairs(games) do
     for _, gameId in ipairs(gameIds) do
         if gameId == placeId then
-            if scriptName == "ADS" or scriptName == "WFS" then
+            if scriptName == "ADS" or scriptName == "WFS" or scriptName == "ACS" then
                 useSpecificScript = true
             else
                 loadstring(game:HttpGet(rs .. scriptName .. ".lua"))()
