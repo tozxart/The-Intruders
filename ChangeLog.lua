@@ -350,7 +350,7 @@ local function InitChangeLog(Settings)
 		BackgroundColor3 = Color3.fromRGB(200, 200, 200),
 	}):Play()
 	wait(0.2)
-    
-end
+    return Prompt 
 
+end
 return InitChangeLog
