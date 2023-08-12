@@ -1,9 +1,9 @@
 local function InitChangeLog(Settings)
-	assert(typeof(Settings) == 'table', 'Invalid argument #1 (table expected)')
-	assert(typeof(Settings.News) == 'table', "Invalid format to 'Settings.News' (table expected)")
-	assert(typeof(Settings.MainText) == 'string', "Invalid format to 'Settings.MainText' (string expected)")
-	assert(typeof(Settings.Title) == 'string', "Invalid format to 'Settings.MainText' (string expected)")
-	Settings.DelayToDestroy = Settings.DelayToDestroy or 15
+    assert(typeof(Settings) == 'table', 'Invalid argument #1 (table expected)')
+    assert(typeof(Settings.News) == 'table', "Invalid format to 'Settings.News' (table expected)")
+    assert(typeof(Settings.MainText) == 'string', "Invalid format to 'Settings.MainText' (string expected)")
+    assert(typeof(Settings.Title) == 'string', "Invalid format to 'Settings.MainText' (string expected)")
+    Settings.DelayToDestroy = Settings.DelayToDestroy or 15
 
 	local function Create(Class, Properties)
 		local _Instance = Class
@@ -350,11 +350,6 @@ local function InitChangeLog(Settings)
 		BackgroundColor3 = Color3.fromRGB(200, 200, 200),
 	}):Play()
 	wait(0.2)
+	
 end
-coroutine.wrap(InitChangeLog)({
-    News = { '<b><font color="rgb(255,0,0)">V 0.2</font></b>', '> Add Auto Dode', '> Auto Skills' },
-	Title = 'The Intruders',
-	MainText = 'Make Sure to join our <b>Discord Server</b>.<br/><font color="rgb(0,155,225)">https://discord.gg/vfkD5VCRKU</font>',
-	DelayToDestroy = 15,
-	From = 'ToZxart',
-})
+return InitChangeLog
