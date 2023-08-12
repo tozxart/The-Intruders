@@ -1,14 +1,14 @@
 local function InitChangeLog(Settings)
-    assert(typeof(Settings) == 'table', 'Invalid argument #1 (table expected)')
-    assert(typeof(Settings.News) == 'table', "Invalid format to 'Settings.News' (table expected)")
-    assert(typeof(Settings.MainText) == 'string', "Invalid format to 'Settings.MainText' (string expected)")
-    assert(typeof(Settings.Title) == 'string', "Invalid format to 'Settings.MainText' (string expected)")
-    Settings.DelayToDestroy = Settings.DelayToDestroy or 15
+  	assert(typeof(Settings) == "table", "Invalid argument #1 (table expected)")
+	assert(typeof(Settings.News) == "table", "Invalid format to 'Settings.News' (table expected)")
+	assert(typeof(Settings.MainText) == "string", "Invalid format to 'Settings.MainText' (string expected)")
+	assert(typeof(Settings.Title) == "string", "Invalid format to 'Settings.MainText' (string expected)")
+	Settings.DelayToDestroy = Settings.DelayToDestroy or 15
 
 	local function Create(Class, Properties)
 		local _Instance = Class
 
-		if type(Class) == 'string' then
+		if type(Class) == "string" then
 			_Instance = Instance.new(Class)
 		end
 
@@ -21,13 +21,13 @@ local function InitChangeLog(Settings)
 
 	local TextBoundsCache = {}
 	local function GetTextBounds(Text, Font, Size, Resolution)
-		local TextService = game:GetService('TextService')
+		local TextService = game:GetService("TextService")
 		if not TextService then
 			return 0, 0
 		end
 
-		Text = Text:gsub('<br/>', '\n')
-		local CleanText = Text:gsub('<[^>]+>', '')
+		Text = Text:gsub("<br/>", "\n")
+		local CleanText = Text:gsub("<[^>]+>", "")
 
 		if not TextBoundsCache[CleanText] then
 			local Bounds = TextService:GetTextSize(CleanText, Size, Font, Resolution or Vector2.new(1920, 1080))
@@ -37,25 +37,26 @@ local function InitChangeLog(Settings)
 		return TextBoundsCache[CleanText].X, TextBoundsCache[CleanText].Y
 	end
 
-	local Prompt = Create('ScreenGui', {
-		Name = 'Prompt',
+	local Prompt = Create("ScreenGui", {
+		Name = "Prompt",
 		Parent = gethui and gethui() or game.CoreGui,
 		DisplayOrder = 100,
 		ResetOnSpawn = false,
 	})
 
-	local Main = Create('Frame', {
-		Name = 'Main',
+	local Main = Create("Frame", {
+		Name = "Main",
 		Parent = Prompt,
 		AnchorPoint = Vector2.new(0.5, 0.5),
 		BackgroundColor3 = Color3.fromRGB(25, 25, 25),
 		BorderSizePixel = 0,
 		Position = UDim2.new(0.199853599, 0, 0.858749986, 0),
 		Size = UDim2.new(0, 500, 0, 187),
+		Visible = false,
 	})
 
-	local Title = Create('TextLabel', {
-		Name = 'Title',
+	local Title = Create("TextLabel", {
+		Name = "Title",
 		Parent = Main,
 		BackgroundColor3 = Color3.fromRGB(255, 255, 255),
 		BackgroundTransparency = 1.000,
@@ -63,7 +64,7 @@ local function InitChangeLog(Settings)
 		Position = UDim2.new(0, 20, 0, 19),
 		Size = UDim2.new(0, 220, 0, 16),
 		Font = Enum.Font.GothamMedium,
-		Text = 'New Documentation Available',
+		Text = "New Documentation Available",
 		TextColor3 = Color3.fromRGB(240, 240, 240),
 		TextScaled = true,
 		TextSize = 14.000,
@@ -71,13 +72,13 @@ local function InitChangeLog(Settings)
 		TextXAlignment = Enum.TextXAlignment.Left,
 	})
 
-	local UICorner = Create('UICorner', {
+	local UICorner = Create("UICorner", {
 		CornerRadius = UDim.new(0, 9),
 		Parent = Main,
 	})
 
-	local Shadow = Create('Frame', {
-		Name = 'Shadow',
+	local Shadow = Create("Frame", {
+		Name = "Shadow",
 		Parent = Main,
 		AnchorPoint = Vector2.new(0.5, 0.5),
 		BackgroundColor3 = Color3.fromRGB(255, 255, 255),
@@ -88,8 +89,8 @@ local function InitChangeLog(Settings)
 		ZIndex = 0,
 	})
 
-	local Image = Create('ImageLabel', {
-		Name = 'Image',
+	local Image = Create("ImageLabel", {
+		Name = "Image",
 		Parent = Shadow,
 		AnchorPoint = Vector2.new(0.5, 0.5),
 		BackgroundColor3 = Color3.fromRGB(255, 255, 255),
@@ -98,13 +99,13 @@ local function InitChangeLog(Settings)
 		Position = UDim2.new(0.5, 0, 0.5, 0),
 		Size = UDim2.new(1.60000002, 0, 1.29999995, 0),
 		ZIndex = 0,
-		Image = 'rbxassetid://5587865193',
+		Image = "rbxassetid://5587865193",
 		ImageColor3 = Color3.fromRGB(20, 20, 20),
 		ImageTransparency = 0.500,
 	})
 
-	local NoteTitle = Create('TextLabel', {
-		Name = 'NoteTitle',
+	local NoteTitle = Create("TextLabel", {
+		Name = "NoteTitle",
 		Parent = Main,
 		BackgroundColor3 = Color3.fromRGB(255, 255, 255),
 		BackgroundTransparency = 1.000,
@@ -112,7 +113,7 @@ local function InitChangeLog(Settings)
 		Position = UDim2.new(0.449999988, 0, 0.858796775, 0),
 		Size = UDim2.new(0, 258, 0, 12),
 		Font = Enum.Font.GothamMedium,
-		Text = 'This will disappear in the next 15 seconds',
+		Text = "This will disappear in the next 15 seconds",
 		TextColor3 = Color3.fromRGB(150, 150, 150),
 		TextScaled = true,
 		TextSize = 14.000,
@@ -120,8 +121,8 @@ local function InitChangeLog(Settings)
 		TextXAlignment = Enum.TextXAlignment.Right,
 	})
 
-	local From = Create('TextLabel', {
-		Name = 'From',
+	local From = Create("TextLabel", {
+		Name = "From",
 		Parent = Main,
 		BackgroundColor3 = Color3.fromRGB(255, 255, 255),
 		BackgroundTransparency = 1.000,
@@ -129,7 +130,7 @@ local function InitChangeLog(Settings)
 		Position = UDim2.new(0.0460000001, 0, 0.858796954, 0),
 		Size = UDim2.new(0, 156, 0, 12),
 		Font = Enum.Font.GothamMedium,
-		Text = Settings.From or '- Metas (Lead Developer)',
+		Text = Settings.From or "- Metas (Lead Developer)",
 		TextColor3 = Color3.fromRGB(80, 80, 80),
 		TextScaled = true,
 		TextSize = 14.000,
@@ -138,8 +139,8 @@ local function InitChangeLog(Settings)
 		Visible = Settings.From ~= nil,
 	})
 
-	local Content = Create('ScrollingFrame', {
-		Name = 'Content',
+	local Content = Create("ScrollingFrame", {
+		Name = "Content",
 		Parent = Main,
 		AnchorPoint = Vector2.new(0, 0.5),
 		BackgroundColor3 = Color3.fromRGB(255, 255, 255),
@@ -148,15 +149,15 @@ local function InitChangeLog(Settings)
 		Position = UDim2.new(0.0399999991, 0, 0.5, 0),
 		Selectable = false,
 		Size = UDim2.new(0, 462, 0, 105),
-		BottomImage = '',
+		BottomImage = "",
 		CanvasSize = UDim2.new(0, 0, 0, 0),
-		ScrollBarThickness = 2,
-		TopImage = '',
-		AutomaticCanvasSize = 'Y',
+		ScrollBarThickness = 6, -- Increase this value to make the scroll bar larger
+		TopImage = "",
+		AutomaticCanvasSize = "Y",
 	})
 
-	local MainText = Create('TextLabel', {
-		Name = 'MainText',
+	local MainText = Create("TextLabel", {
+		Name = "MainText",
 		Parent = Content,
 		BackgroundColor3 = Color3.fromRGB(255, 255, 255),
 		BackgroundTransparency = 1.000,
@@ -173,8 +174,8 @@ local function InitChangeLog(Settings)
 		-- AutomaticSize = "Y",
 	})
 
-	local Open = Create('TextButton', {
-		Name = 'Open',
+	local Open = Create("TextButton", {
+		Name = "Open",
 		Parent = MainText,
 		AnchorPoint = Vector2.new(0, 1),
 		BackgroundColor3 = Color3.fromRGB(255, 255, 255),
@@ -183,13 +184,13 @@ local function InitChangeLog(Settings)
 		Position = UDim2.new(0, 0, 1, -5),
 		Size = UDim2.new(0, 340, 0, 30),
 		Font = Enum.Font.SourceSans,
-		Text = '',
+		Text = "",
 		TextColor3 = Color3.fromRGB(0, 0, 0),
 		TextSize = 1.000,
 		TextTransparency = 1.000,
 	})
 
-	local UIListLayout = Create('UIListLayout', {
+	local UIListLayout = Create("UIListLayout", {
 		Parent = Content,
 		SortOrder = Enum.SortOrder.LayoutOrder,
 		FillDirection = Enum.FillDirection.Vertical,
@@ -197,8 +198,8 @@ local function InitChangeLog(Settings)
 		VerticalAlignment = Enum.VerticalAlignment.Top,
 	})
 
-	local Changelogs = Create('Frame', {
-		Name = 'Changelogs',
+	local Changelogs = Create("Frame", {
+		Name = "Changelogs",
 		Parent = Content,
 		BackgroundColor3 = Color3.fromRGB(255, 255, 255),
 		BackgroundTransparency = 1.000,
@@ -207,8 +208,8 @@ local function InitChangeLog(Settings)
 		Size = UDim2.new(1, 0, 0, 100),
 	})
 
-	local Title_2 = Create('TextLabel', {
-		Name = 'Title',
+	local Title_2 = Create("TextLabel", {
+		Name = "Title",
 		Parent = Changelogs,
 		BackgroundColor3 = Color3.fromRGB(255, 255, 255),
 		BackgroundTransparency = 1.000,
@@ -216,14 +217,14 @@ local function InitChangeLog(Settings)
 		LayoutOrder = -1,
 		Size = UDim2.new(0, 200, 0, 16),
 		Font = Enum.Font.GothamBold,
-		Text = 'Changelogs',
+		Text = "Changelogs",
 		TextColor3 = Color3.fromRGB(200, 200, 200),
 		TextSize = 16.000,
 		TextXAlignment = Enum.TextXAlignment.Left,
 		TextYAlignment = Enum.TextYAlignment.Top,
 	})
 
-	local UIListLayout_2 = Create('UIListLayout', {
+	local UIListLayout_2 = Create("UIListLayout", {
 		Parent = Changelogs,
 		SortOrder = Enum.SortOrder.LayoutOrder,
 		FillDirection = Enum.FillDirection.Vertical,
@@ -236,30 +237,56 @@ local function InitChangeLog(Settings)
 	MainText.Size = UDim2.new(0, 340, 0, Y + 30)
 	MainText.Text = Settings.MainText
 	Title.Text = Settings.Title
-
+	-- Modify the loop that adds news items
 	for i, v in next, Settings.News do
 		wait()
-		Create('TextLabel', {
-			Name = 'New',
+		local newsLabel = Create("TextLabel", {
+			Name = "New",
 			Parent = Changelogs,
 			BackgroundColor3 = Color3.fromRGB(255, 255, 255),
 			BackgroundTransparency = 1.000,
 			BorderSizePixel = 0,
-			Size = UDim2.new(0, 200, 0, 12),
+			Size = UDim2.new(0, 200, 0, 12), -- Modify this size to adjust the label height
 			Font = Enum.Font.Gotham,
 			Text = v,
 			TextColor3 = Color3.fromRGB(225, 225, 225),
 			TextSize = 13.000,
-            RichText = true,
+			RichText = true,
 			TextXAlignment = Enum.TextXAlignment.Left,
 			TextYAlignment = Enum.TextYAlignment.Top,
 		})
+
+		-- Calculate the height of the news label based on the text
+		local textBoundsX, textBoundsY = GetTextBounds(v, Enum.Font.Gotham, 13.000)
+
+		-- If the text is too long, add line breaks to wrap it within the available space
+		if textBoundsX > 200 then
+			local wrappedText = ""
+			local words = v:gmatch("%S+")
+			local line = ""
+			for word in words do
+				if #line + #word + 1 <= 60 then -- Adjust the maximum line length as needed
+					line = line .. word .. " "
+				else
+					wrappedText = wrappedText .. line .. "\n"
+					line = word .. " "
+				end
+			end
+			wrappedText = wrappedText .. line
+			newsLabel.Text = wrappedText
+			textBoundsX, textBoundsY = GetTextBounds(wrappedText, Enum.Font.Gotham, 13.000)
+		end
+
+		newsLabel.Size = UDim2.new(0, 200, 0, textBoundsY + 5) -- Adjust the height as needed
 	end
 
-	--Changelogs.Size = UDim2.new(0, (#Settings.News * 12), 0, 100)
+	-- Adjust the size of the ScrollingFrame to fit the news items
+	local totalNewsHeight = UIListLayout_2.AbsoluteContentSize.Y
+	Changelogs.Size = UDim2.new(1, 0, 0, totalNewsHeight)
 
-	local script = Instance.new('LocalScript', Prompt)
-	local TweenService = game:GetService('TweenService')
+	--Changelogs.Size = UDim2.new(0, (#Settings.News * 12), 0, 100)
+	local script = Instance.new("LocalScript", Prompt)
+	local TweenService = game:GetService("TweenService")
 	local Prompt = script.Parent.Main
 	Prompt.BackgroundTransparency = 1
 	Prompt.BackgroundColor3 = Color3.fromRGB(150, 150, 150)
@@ -273,10 +300,11 @@ local function InitChangeLog(Settings)
 	Prompt.NoteTitle.TextTransparency = 1
 
 	for _, Label in pairs(Prompt.Content.Changelogs:GetChildren()) do
-		if Label:IsA('TextLabel') then
+		if Label:IsA("TextLabel") then
 			Label.TextTransparency = 1
 		end
 	end
+  Prompt.Visible = true
 	wait(2)
 	TweenService:Create(Prompt, TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
 		Size = UDim2.fromOffset(500, 187),
@@ -301,7 +329,7 @@ local function InitChangeLog(Settings)
 	}):Play()
 	wait(0.05)
 	for _, Label in pairs(Prompt.Content.Changelogs:GetChildren()) do
-		if Label:IsA('TextLabel') then
+		if Label:IsA("TextLabel") then
 			TweenService:Create(Label, TweenInfo.new(0.1, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
 				TextTransparency = 0,
 			}):Play()
@@ -313,12 +341,12 @@ local function InitChangeLog(Settings)
 	}):Play()
 	wait(1)
 	for i = Settings.DelayToDestroy, 0, -1 do
-		Prompt.NoteTitle.Text = string.format('This will disappear in the next %i seconds', i)
+		Prompt.NoteTitle.Text = string.format("This will disappear in the next %i seconds", i)
 		wait(1)
 	end
-	Prompt.NoteTitle.Text = 'Closing...'
+	Prompt.NoteTitle.Text = "Closing..."
 	for _, Label in pairs(Prompt.Content.Changelogs:GetChildren()) do
-		if Label:IsA('TextLabel') then
+		if Label:IsA("TextLabel") then
 			TweenService:Create(Label, TweenInfo.new(0.1, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
 				TextTransparency = 1,
 			}):Play()
