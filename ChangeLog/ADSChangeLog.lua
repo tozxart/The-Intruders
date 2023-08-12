@@ -21,6 +21,6 @@ return {
     },
     Title = 'The Intruders',
     MainText = 'Make Sure to join our <b>Discord Server</b>.<br/><font color="rgb(0,155,225)">https://discord.gg/vfkD5VCRKU</font>',
-    DelayToDestroy = 15,
+    DelayToDestroy = 35,
     From = 'ToZxart', 
 }
