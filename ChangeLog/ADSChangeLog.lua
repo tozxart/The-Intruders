@@ -1,6 +1,13 @@
 return {
-    Version = "1.0", -- Change this to the version of your script
+    Version = "2.0", -- Change this to the version of your script
     News = { 
+        '<b><font color="rgb(255,0,0)">V 0.3</font></b>',
+        '> New Change Log UI.',
+        '> Linkvertise now has 6 steps.',
+        '> New server.',
+        '> Fixed Auto upgrade/equip best cards.',
+        '> Fixed auto upgrade webhook.',
+        '> Added new checks to prevent script from crashing.',
         '<b><font color="rgb(255,0,0)">V 0.2</font></b>',
         '> New AI Suggestions: Get helpful messages on Discord to improve your gameplay and become better at the game.',
         '> Free Auto Dodge Update: Apologies, but the auto dodge will stop working after 4 hours. You ll need to get a new key to make it work again. If the auto dodge expires, the TP Behind feature will activate automatically.',
@@ -21,6 +28,6 @@ return {
     },
     Title = 'The Intruders',
     MainText = 'Make Sure to join our <b>Discord Server</b>.<br/><font color="rgb(0,155,225)">https://discord.gg/vfkD5VCRKU</font>',
-    DelayToDestroy = 35,
+    DelayToDestroy = 60,
     From = 'ToZxart', 
 }
