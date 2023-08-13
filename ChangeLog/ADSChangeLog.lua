@@ -1,6 +1,8 @@
 return {
-    Version = "2.0", -- Change this to the version of your script
+    Version = "4.0", -- Change this to the version of your script
     News = { 
+        '<b><font color="rgb(255,0,0)">V 0.4</font></b>',
+        '> Fixed Farm AFK.',
         '<b><font color="rgb(255,0,0)">V 0.3</font></b>',
         '> New Change Log UI.',
         '> Linkvertise now has 6 steps.',
