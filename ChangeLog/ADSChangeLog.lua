@@ -4,6 +4,7 @@ return {
         '<b><font color="rgb(255,0,0)">V 0.5</font></b>',
         '> Improved Paid Auto Dodge its much faster and safe.',
         '> Added Custom setting for FPS Cap.',
+        '> Added a button to show the update logs.',
         '<b><font color="rgb(255,0,0)">V 0.4</font></b>',
         '> Fixed Farm AFK.',
         '<b><font color="rgb(255,0,0)">V 0.3</font></b>',
