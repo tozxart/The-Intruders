@@ -1,6 +1,9 @@
 return {
-    Version = "4.0", -- Change this to the version of your script
+    Version = "5.0", -- Change this to the version of your script
     News = { 
+        '<b><font color="rgb(255,0,0)">V 0.5</font></b>',
+        '> Improved Paid Auto Dodge its much faster and safe.',
+        '> Added Custom setting for FPS Cap.',
         '<b><font color="rgb(255,0,0)">V 0.4</font></b>',
         '> Fixed Farm AFK.',
         '<b><font color="rgb(255,0,0)">V 0.3</font></b>',
@@ -9,7 +12,7 @@ return {
         '> New server.',
         '> Fixed Auto upgrade/equip best cards.',
         '> Fixed auto upgrade webhook.',
-        '> Added new checks to prevent script from crashing.',
+        '> Added new checks to prevent the script from crashing.',
         '<b><font color="rgb(255,0,0)">V 0.2</font></b>',
         '> New AI Suggestions: Get helpful messages on Discord to improve your gameplay and become better at the game.',
         '> Free Auto Dodge Update: Apologies, but the auto dodge will stop working after 4 hours. You ll need to get a new key to make it work again. If the auto dodge expires, the TP Behind feature will activate automatically.',
@@ -17,8 +20,8 @@ return {
         '> Ive made many improvements and fixed bugs and everything above.',
         '<b><font color="rgb(255,0,0)">V 0.1</font></b>',
         '> Updated the wishlist System',
-        '> Fixed Auto Dodge' ,
-        '> New Auto Delete mass cards' ,
+        '> Fixed Auto Dodge',
+        '> New Auto Delete mass cards',
         '> New Auto Upgrade Cards',
         '> New auto Equip best cards with some advance stats',
         '> Webhook for Upgrade, Delete, Equip cards',
