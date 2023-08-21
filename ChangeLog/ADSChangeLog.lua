@@ -1,6 +1,17 @@
 return {
-    Version = "5.0", -- Change this to the version of your script
+    Version = "1", -- Change this to the version of your script
     News = { 
+         '<b><font color="rgb(255,0,0)">V 1</font></b>',
+        '> The Update may have bugs please Report and I will fix it  .',
+        '> New UI Desingne With a lot of things .',
+        '> Improved the script and fixed a lot of bugs.',
+        '> Added New Ui for mobile users.',
+        '> Added New Tab Layout you can change it in credits tab.',
+        '> Added New KeyBord Script for mobile users.',
+        '> Made the script friendly for those who dont know how to use it (Suggest anything and I will add it to make it more easily).',
+        '> I have added a lot more but I dont remember, find it by yourself .',
+        '<b><font color="rgb(255,0,0)">V 0.4</font></b>',
+        '> Fixed Farm AFK.',
         '<b><font color="rgb(255,0,0)">V 0.5</font></b>',
         '> Improved Paid Auto Dodge its much faster and safe.',
         '> Added Custom setting for FPS Cap.',
