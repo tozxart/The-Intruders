@@ -3857,9 +3857,9 @@ function RayfieldLibrary:CreateWindow(Settings)
 end
 
 function RayfieldLibrary:ToggleOldTabStyle(oldTabStyle)
-    if oldTabStyle == nil then oldTabStyle = false end
+    if oldTabStyle == nil then oldTabStyle = true end
 
-    if oldTabStyle then
+    if not oldTabStyle then
         TopList.Visible = true
         Elements.Size = UDim2.new(1, 0, 0, 364)
         Elements.Position = UDim2.new(0.5, 0, 0.5, 45)
