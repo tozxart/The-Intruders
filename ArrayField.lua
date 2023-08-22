@@ -2954,6 +2954,9 @@ function RayfieldLibrary:CreateWindow(Settings)
                 TweenService:Create(Toggle, TweenInfo.new(0.6, Enum.EasingStyle.Quint),
                     { BackgroundColor3 = SelectedTheme.ElementBackground }):Play()
             end)
+            local Success, Response = pcall(function()
+                ToggleSettings.Callback(ToggleSettings.CurrentValue)
+            end)
             Toggle.Interact.MouseButton1Click:Connect(function()
                 if ToggleSettings.Locked then return end
                 if ToggleSettings.CurrentValue then
