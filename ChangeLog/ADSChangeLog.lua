@@ -1,6 +1,10 @@
 return {
-    Version = "1", -- Change this to the version of your script
+    Version = "1.01", -- Change this to the version of your script
     News = { 
+         '<b><font color="rgb(255,0,0)">V 1.01</font></b>',
+        '> fIXED mobile UI version.',
+        '> Fixed Black Screen .',
+        '> Fixed Hide/Minimize UI.',
          '<b><font color="rgb(255,0,0)">V 1</font></b>',
         '> The Update may have bugs please Report and I will fix it  .',
         '> New UI Desingne With a lot of things .',
