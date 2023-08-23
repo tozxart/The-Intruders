@@ -118,7 +118,7 @@ local ContentProvider = game:GetService("ContentProvider")
 -- local TextService = game:GetService("TextService")
 
 -- Interface Management
-local Rayfield = game:GetObjects("rbxassetid://13067385695")[1]
+local Rayfield = game:GetObjects("rbxassetid://14475018626")[1]
 Rayfield.Enabled = false
 pcall(function()
     _G.LastRayField.Name = 'Old Arrayfield'
@@ -810,7 +810,7 @@ function Hide()
         Content = "The interface has been hidden, you can unhide the interface by tapping Left CTRL",
         Duration = 7
     })
-    TweenService:Create(Main, TweenInfo.new(0.5, Enum.EasingStyle.Quint), { Size = UDim2.new(0, 470, 0, 400) }):Play()
+    TweenService:Create(Main, TweenInfo.new(0.5, Enum.EasingStyle.Quint), { Size = UDim2.new(0, 500, 0, 300) }):Play()
     TweenService:Create(Main.Topbar, TweenInfo.new(0.5, Enum.EasingStyle.Quint), { Size = UDim2.new(0, 470, 0, 45) })
         :Play()
     TweenService:Create(Main, TweenInfo.new(0.5, Enum.EasingStyle.Quint), { BackgroundTransparency = 1 }):Play()
@@ -878,7 +878,7 @@ function Unhide()
     Debounce = true
     Main.Position = UDim2.new(0.5, 0, 0.5, 0)
     Main.Visible = true
-    TweenService:Create(Main, TweenInfo.new(0.5, Enum.EasingStyle.Quint), { Size = UDim2.new(0, 500, 0, 475) }):Play()
+    TweenService:Create(Main, TweenInfo.new(0.5, Enum.EasingStyle.Quint), { Size = UDim2.new(0, 500, 0, 300) }):Play()
     TweenService:Create(Main.Topbar, TweenInfo.new(0.5, Enum.EasingStyle.Quint), { Size = UDim2.new(0, 500, 0, 45) })
         :Play()
     TweenService:Create(Main.Shadow.Image, TweenInfo.new(0.7, Enum.EasingStyle.Quint), { ImageTransparency = 0.4 }):Play()
@@ -1024,7 +1024,7 @@ function Maximise()
     TweenService:Create(Topbar.CornerRepair, TweenInfo.new(0.5, Enum.EasingStyle.Quint), { BackgroundTransparency = 0 })
         :Play()
     TweenService:Create(Topbar.Divider, TweenInfo.new(0.5, Enum.EasingStyle.Quint), { BackgroundTransparency = 0 }):Play()
-    TweenService:Create(Main, TweenInfo.new(0.5, Enum.EasingStyle.Quint), { Size = UDim2.new(0, 500, 0, 475) }):Play()
+    TweenService:Create(Main, TweenInfo.new(0.5, Enum.EasingStyle.Quint), { Size = UDim2.new(0, 500, 0, 300) }):Play()
     TweenService:Create(Topbar, TweenInfo.new(0.5, Enum.EasingStyle.Quint), { Size = UDim2.new(0, 500, 0, 45) }):Play()
     TabsList.Visible = true
     wait(0.2)
@@ -1121,7 +1121,7 @@ function OpenSideBar()
     Debounce = true
     Main.SideTabList.Visible = true
     TweenService:Create(Main.SideTabList, TweenInfo.new(0.4, Enum.EasingStyle.Quint),
-        { BackgroundTransparency = .03, Size = UDim2.new(0, 160, 0, 405), Position = UDim2.new(0, 14, 0.5, 22) }):Play()
+        { BackgroundTransparency = .03, Size = UDim2.new(0, 160, 0, 250), Position = UDim2.new(0, 14, 0.5, 22) }):Play()
     TweenService:Create(Main.SideTabList.UIStroke, TweenInfo.new(0.4, Enum.EasingStyle.Quint), { Transparency = 0 })
         :Play()
     TweenService:Create(Main.SideTabList.RDMT, TweenInfo.new(0.4, Enum.EasingStyle.Quint), { TextTransparency = 0 })
@@ -2954,9 +2954,6 @@ function RayfieldLibrary:CreateWindow(Settings)
                 TweenService:Create(Toggle, TweenInfo.new(0.6, Enum.EasingStyle.Quint),
                     { BackgroundColor3 = SelectedTheme.ElementBackground }):Play()
             end)
-            local Success, Response = pcall(function()
-                ToggleSettings.Callback(ToggleSettings.CurrentValue)
-            end)
             Toggle.Interact.MouseButton1Click:Connect(function()
                 if ToggleSettings.Locked then return end
                 if ToggleSettings.CurrentValue then
@@ -3758,7 +3755,7 @@ function RayfieldLibrary:CreateWindow(Settings)
         :Play()
     TweenService:Create(LoadingFrame.Version, TweenInfo.new(0.5, Enum.EasingStyle.Quint), { TextTransparency = 1 }):Play()
     wait(0.2)
-    TweenService:Create(Main, TweenInfo.new(0.7, Enum.EasingStyle.Quint), { Size = UDim2.new(0, 500, 0, 475) }):Play()
+    TweenService:Create(Main, TweenInfo.new(0.7, Enum.EasingStyle.Quint), { Size = UDim2.new(0, 500, 0, 300) }):Play()
     TweenService:Create(Main.Shadow.Image, TweenInfo.new(0.7, Enum.EasingStyle.Quint), { ImageTransparency = 0.4 }):Play()
 
     Topbar.BackgroundTransparency = 1
@@ -3862,17 +3859,17 @@ end
 function RayfieldLibrary:ToggleOldTabStyle(oldTabStyle)
     if oldTabStyle == nil then oldTabStyle = true end
 
-    if not oldTabStyle then
+    if oldTabStyle then
         TopList.Visible = true
-        Elements.Size = UDim2.new(1, 0, 0, 364)
-        Elements.Position = UDim2.new(0.5, 0, 0.5, 45)
+        Elements.Size = UDim2.new(1, 0, 0, 210)
+        Elements.Position = UDim2.new(0.5, 0, 0.63, 0)
 
         Topbar.Type.Visible = false
         Topbar.Title.Position = UDim2.new(0, 15, 0.5, 0)
     else
         TopList.Visible = false
-        Elements.Size = UDim2.new(1, 0, 0, 409)
-        Elements.Position = UDim2.new(0.5, 0, 0.555, 0)
+        Elements.Size = UDim2.new(1, 0, 0, 250)
+        Elements.Position = UDim2.new(0.5, 0, 0.57, 0)
 
         Topbar.Type.Visible = true
         Topbar.Title.Position = UDim2.new(0, 45, 0.5, 0)
