@@ -1,6 +1,9 @@
 return {
     Version = "1.01", -- Change this to the version of your script
     News = { 
+        '<b><font color="rgb(255,0,0)">V 1.02</font></b>',
+        '> Added new map to the auto level.',
+        '> Added Select skills Option for paid .',
          '<b><font color="rgb(255,0,0)">V 1.01</font></b>',
         '> Fixed mobile UI version.',
         '> Fixed Black Screen .',
