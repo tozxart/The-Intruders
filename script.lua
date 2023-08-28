@@ -1,2 +1,2 @@
 repeat wait() until game:IsLoaded()
-loadstring(game:HttpGet('https://scripts.luawl.com/hosted/3498/20575/TheIntruders.lua'))()
+loadstring(game:HttpGet("https://api.luarmor.net/files/v3/loaders/3afb7bf7c1aac757c597d415975d8955.lua"))()
