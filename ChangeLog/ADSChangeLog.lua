@@ -1,6 +1,8 @@
 return {
     Version = "1.01", -- Change this to the version of your script
     News = { 
+        '<b><font color="rgb(255,0,0)">V 1.03</font></b>',
+        '> Added New Skill Method for Hydrogen mac version because it does not support the current auto skill.',
         '<b><font color="rgb(255,0,0)">V 1.02</font></b>',
         '> Added new map to the auto level.',
         '> Added Select skills Option for paid .',
