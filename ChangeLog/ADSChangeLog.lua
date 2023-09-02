@@ -1,6 +1,11 @@
 return {
     Version = "1.01", -- Change this to the version of your script
     News = { 
+         '<b><font color="rgb(255,0,0)">V 1.04</font></b>',
+        '> Fixed all webhooks.',
+        '> Fixed auto swap does not work after speed raid .',
+        '> Fixed Discord auto join .',
+        '> Added new executor suggestion .',
         '<b><font color="rgb(255,0,0)">V 1.03</font></b>',
         '> Added New Skill Method for Hydrogen mac version because it does not support the current auto skill.',
         '<b><font color="rgb(255,0,0)">V 1.02</font></b>',
