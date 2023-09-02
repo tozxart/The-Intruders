@@ -1,5 +1,5 @@
 return {
-    Version = "1.01", -- Change this to the version of your script
+    Version = "1.02", -- Change this to the version of your script
     News = { 
          '<b><font color="rgb(255,0,0)">V 1.04</font></b>',
         '> Fixed all webhooks.',
