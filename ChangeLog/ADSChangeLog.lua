@@ -1,6 +1,9 @@
 return {
-    Version = "1.02", -- Change this to the version of your script
+    Version = "1.03", -- Change this to the version of your script
     News = { 
+                 '<b><font color="rgb(255,0,0)">V 1.05</font></b>',
+        '> Made paid script execute much faster.',
+        '> Fixed auto level does not work when you finish speed raid .',
          '<b><font color="rgb(255,0,0)">V 1.04</font></b>',
         '> Fixed all webhooks.',
         '> Fixed auto swap does not work after speed raid .',
