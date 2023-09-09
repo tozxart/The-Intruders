@@ -1,5 +1,17 @@
+--[[
 
-local Release = ""
+ArrayField Interface Suite
+by Arrays
+
+Original by Sirius
+
+-------------------------------
+Arrays  | Designing + Programming + New Features
+and Rafa =D
+
+]]
+
+local Release = "Rafa Edition"
 local NotificationDuration = 6.5
 local RayfieldFolder = "Rayfield"
 local ConfigurationFolder = RayfieldFolder .. "/Configurations"
@@ -106,7 +118,7 @@ local ContentProvider = game:GetService("ContentProvider")
 -- local TextService = game:GetService("TextService")
 
 -- Interface Management
-local Rayfield = game:GetObjects("rbxassetid://14475018626")[1]
+local Rayfield = game:GetObjects("rbxassetid://13067385695")[1]
 Rayfield.Enabled = false
 pcall(function()
     _G.LastRayField.Name = 'Old Arrayfield'
@@ -798,7 +810,7 @@ function Hide()
         Content = "The interface has been hidden, you can unhide the interface by tapping Left CTRL",
         Duration = 7
     })
-    TweenService:Create(Main, TweenInfo.new(0.5, Enum.EasingStyle.Quint), { Size = UDim2.new(0, 500, 0, 300) }):Play()
+    TweenService:Create(Main, TweenInfo.new(0.5, Enum.EasingStyle.Quint), { Size = UDim2.new(0, 470, 0, 400) }):Play()
     TweenService:Create(Main.Topbar, TweenInfo.new(0.5, Enum.EasingStyle.Quint), { Size = UDim2.new(0, 470, 0, 45) })
         :Play()
     TweenService:Create(Main, TweenInfo.new(0.5, Enum.EasingStyle.Quint), { BackgroundTransparency = 1 }):Play()
@@ -866,11 +878,11 @@ function Unhide()
     Debounce = true
     Main.Position = UDim2.new(0.5, 0, 0.5, 0)
     Main.Visible = true
-    TweenService:Create(Main, TweenInfo.new(0.5, Enum.EasingStyle.Quint), { Size = UDim2.new(0, 500, 0, 300) }):Play()
+    TweenService:Create(Main, TweenInfo.new(0.5, Enum.EasingStyle.Quint), { Size = UDim2.new(0, 500, 0, 475) }):Play()
     TweenService:Create(Main.Topbar, TweenInfo.new(0.5, Enum.EasingStyle.Quint), { Size = UDim2.new(0, 500, 0, 45) })
         :Play()
     TweenService:Create(Main.Shadow.Image, TweenInfo.new(0.7, Enum.EasingStyle.Quint), { ImageTransparency = 0.4 }):Play()
-    TweenService:Create(Main, TweenInfo.new(0.5, Enum.EasingStyle.Quint), { BackgroundTransparency = 0 }):Play()
+    TweenService:Create(Main, TweenInfo.new(0.5, Enum.EasingStyle.Quint), { BackgroundTransparency = 0.25 }):Play()
     TweenService:Create(Main.Topbar, TweenInfo.new(0.5, Enum.EasingStyle.Quint), { BackgroundTransparency = 0 }):Play()
     TweenService:Create(Main.Topbar.Divider, TweenInfo.new(0.5, Enum.EasingStyle.Quint), { BackgroundTransparency = 0 })
         :Play()
@@ -1012,7 +1024,7 @@ function Maximise()
     TweenService:Create(Topbar.CornerRepair, TweenInfo.new(0.5, Enum.EasingStyle.Quint), { BackgroundTransparency = 0 })
         :Play()
     TweenService:Create(Topbar.Divider, TweenInfo.new(0.5, Enum.EasingStyle.Quint), { BackgroundTransparency = 0 }):Play()
-    TweenService:Create(Main, TweenInfo.new(0.5, Enum.EasingStyle.Quint), { Size = UDim2.new(0, 500, 0, 300) }):Play()
+    TweenService:Create(Main, TweenInfo.new(0.5, Enum.EasingStyle.Quint), { Size = UDim2.new(0, 500, 0, 475) }):Play()
     TweenService:Create(Topbar, TweenInfo.new(0.5, Enum.EasingStyle.Quint), { Size = UDim2.new(0, 500, 0, 45) }):Play()
     TabsList.Visible = true
     wait(0.2)
@@ -1109,7 +1121,7 @@ function OpenSideBar()
     Debounce = true
     Main.SideTabList.Visible = true
     TweenService:Create(Main.SideTabList, TweenInfo.new(0.4, Enum.EasingStyle.Quint),
-        { BackgroundTransparency = .03, Size = UDim2.new(0, 160, 0, 250), Position = UDim2.new(0, 14, 0.5, 22) }):Play()
+        { BackgroundTransparency = .03, Size = UDim2.new(0, 160, 0, 405), Position = UDim2.new(0, 14, 0.5, 22) }):Play()
     TweenService:Create(Main.SideTabList.UIStroke, TweenInfo.new(0.4, Enum.EasingStyle.Quint), { Transparency = 0 })
         :Play()
     TweenService:Create(Main.SideTabList.RDMT, TweenInfo.new(0.4, Enum.EasingStyle.Quint), { TextTransparency = 0 })
@@ -1208,43 +1220,12 @@ function RayfieldLibrary:CreateWindow(Settings)
     Topbar.Title.Text = Settings.Name
     Main.Size = UDim2.new(0, 450, 0, 260)
     Main.Visible = true
-    Main.BackgroundTransparency = 1
-    LoadingFrame.Title.TextTransparency = 1
-    LoadingFrame.Subtitle.TextTransparency = 1
-    Main.Shadow.Image.ImageTransparency = 1
-    LoadingFrame.Version.TextTransparency = 1
-    LoadingFrame.Title.Text = Settings.LoadingTitle or "Arrayfield Interface Suite"
-    LoadingFrame.Subtitle.Text = Settings.LoadingSubtitle or "by Sirius | Meta | Rafa"
-    if Settings.LoadingTitle ~= "Arrayfield Interface Suite" then
-        LoadingFrame.Version.Text = "Arrayfield UI"
-    end
-
+    Main.BackgroundTransparency = 0.25
     Topbar.Visible = false
     Elements.Visible = false
-    LoadingFrame.Visible = true
+    LoadingFrame.Visible = false
 
     RayfieldLibrary:ToggleOldTabStyle(Settings.OldTabLayout)
-
-    pcall(function()
-        if not Settings.ConfigurationSaving.FileName then
-            Settings.ConfigurationSaving.FileName = tostring(game.PlaceId)
-        end
-        if not isfolder(RayfieldFolder .. "/" .. "Configuration Folders") then
-
-        end
-        if Settings.ConfigurationSaving.Enabled == nil then
-            Settings.ConfigurationSaving.Enabled = false
-        end
-        CFileName = Settings.ConfigurationSaving.FileName
-        ConfigurationFolder = Settings.ConfigurationSaving.FolderName or ConfigurationFolder
-        CEnabled = Settings.ConfigurationSaving.Enabled
-
-        if Settings.ConfigurationSaving.Enabled then
-            if not isfolder(ConfigurationFolder) then
-                makefolder(ConfigurationFolder)
-            end
-        end
-    end)
 
     AddDraggingFunctionality(Topbar, Main)
 
@@ -1257,7 +1238,6 @@ function RayfieldLibrary:CreateWindow(Settings)
             TabButton.UIStroke.Transparency = 1
         end
     end
-
     Rayfield.Enabled = true
     for _, tabbtn in pairs(SideList:GetChildren()) do
         if tabbtn.ClassName == "Frame" and tabbtn.Name ~= "Placeholder" then
@@ -1282,16 +1262,9 @@ function RayfieldLibrary:CreateWindow(Settings)
     Notifications.Template.Visible = false
     Notifications.Visible = true
     wait(0.5)
-    TweenService:Create(Main, TweenInfo.new(0.7, Enum.EasingStyle.Quint), { BackgroundTransparency = 0 }):Play()
+    TweenService:Create(Main, TweenInfo.new(0.7, Enum.EasingStyle.Quint), { BackgroundTransparency = 0.25 }):Play()
     TweenService:Create(Main.Shadow.Image, TweenInfo.new(0.7, Enum.EasingStyle.Quint), { ImageTransparency = 0.55 })
         :Play()
-    wait(0.1)
-    TweenService:Create(LoadingFrame.Title, TweenInfo.new(0.7, Enum.EasingStyle.Quint), { TextTransparency = 0 }):Play()
-    wait(0.05)
-    TweenService:Create(LoadingFrame.Subtitle, TweenInfo.new(0.7, Enum.EasingStyle.Quint), { TextTransparency = 0 })
-        :Play()
-    wait(0.05)
-    TweenService:Create(LoadingFrame.Version, TweenInfo.new(0.7, Enum.EasingStyle.Quint), { TextTransparency = 0 }):Play()
 
     Elements.Template.LayoutOrder = 100000
     Elements.Template.Visible = false
@@ -3454,13 +3427,8 @@ function RayfieldLibrary:CreateWindow(Settings)
 
     Elements.Visible = true
 
-    wait(1.2)
-    TweenService:Create(LoadingFrame.Title, TweenInfo.new(0.5, Enum.EasingStyle.Quint), { TextTransparency = 1 }):Play()
-    TweenService:Create(LoadingFrame.Subtitle, TweenInfo.new(0.5, Enum.EasingStyle.Quint), { TextTransparency = 1 })
-        :Play()
-    TweenService:Create(LoadingFrame.Version, TweenInfo.new(0.5, Enum.EasingStyle.Quint), { TextTransparency = 1 }):Play()
-    wait(0.2)
-    TweenService:Create(Main, TweenInfo.new(0.7, Enum.EasingStyle.Quint), { Size = UDim2.new(0, 500, 0, 300) }):Play()
+
+    TweenService:Create(Main, TweenInfo.new(0.7, Enum.EasingStyle.Quint), { Size = UDim2.new(0, 500, 0, 475) }):Play()
     TweenService:Create(Main.Shadow.Image, TweenInfo.new(0.7, Enum.EasingStyle.Quint), { ImageTransparency = 0.4 }):Play()
 
     Topbar.BackgroundTransparency = 1
@@ -3564,17 +3532,17 @@ end
 function RayfieldLibrary:ToggleOldTabStyle(oldTabStyle)
     if oldTabStyle == nil then oldTabStyle = true end
 
-    if oldTabStyle then
+    if not oldTabStyle then
         TopList.Visible = true
-        Elements.Size = UDim2.new(1, 0, 0, 210)
-        Elements.Position = UDim2.new(0.5, 0, 0.63, 0)
+        Elements.Size = UDim2.new(1, 0, 0, 364)
+        Elements.Position = UDim2.new(0.5, 0, 0.5, 45)
 
         Topbar.Type.Visible = false
         Topbar.Title.Position = UDim2.new(0, 15, 0.5, 0)
     else
         TopList.Visible = false
-        Elements.Size = UDim2.new(1, 0, 0, 250)
-        Elements.Position = UDim2.new(0.5, 0, 0.57, 0)
+        Elements.Size = UDim2.new(1, 0, 0, 409)
+        Elements.Position = UDim2.new(0.5, 0, 0.555, 0)
 
         Topbar.Type.Visible = true
         Topbar.Title.Position = UDim2.new(0, 45, 0.5, 0)
