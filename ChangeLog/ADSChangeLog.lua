@@ -1,7 +1,7 @@
 return {
     Version = "1.05", -- Change this to the version of your script
     News = { 
-         '<b><font color="rgb(255,0,0)">V 1.06</font></b>',
+         '<b><font color="rgb(255,0,0)">V 1.07</font></b>',
         '> Added Auto Madoki.',
         '> Webhooks now works better and it will give you more info and it will mention you when you get rare stuff.',
         '> Improved the load time of the script.',
