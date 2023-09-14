@@ -6,6 +6,7 @@ return {
         '> Webhooks now works better and it will give you more info and it will mention you when you get rare stuff.',
         '> Improved the load time of the script.',
         '> Improved the auto dodge it is now much faster and should not fall.',
+        '> Key UI now has buttons.',
         '> Officially closed the free script.',
         '> AI farm soon if I get some new buyers.',
         '<b><font color="rgb(255,0,0)">V 1.06</font></b>',
