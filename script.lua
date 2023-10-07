@@ -1,3 +1,12 @@
+
+game.StarterGui:SetCore("SendNotification", {
+Title = "Error"; -- the title (ofc)
+Text = "Please join discord and use the new link to get the key"; 
+Icon = "rbxassetid://57254792"; 
+Duration = 30;
+})
+
+
 repeat
     wait()
 until game:IsLoaded()
