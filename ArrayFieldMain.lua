@@ -144,9 +144,9 @@ local platform = getplatform()
 
 local RayfieldVER
 if platform == "Mobile (tablet)" or platform == "Mobile (phone)" then
-    RayfieldVER = "14475018626"
+    RayfieldVER = "14474936956"-- Small Rayfield
 else
-    RayfieldVER = "13067385695"
+    RayfieldVER = "14033827792" -- Normal Rayfield
 end
 
 local Rayfield = game:GetObjects("rbxassetid://" .. RayfieldVER)[1]
@@ -192,7 +192,6 @@ local NotePrompt = Main.NotePrompt
 
 Rayfield.DisplayOrder = 100
 LoadingFrame.Version.Text = Release
-
 
 --Variables
 
@@ -3614,6 +3613,7 @@ Topbar.Hide.MouseButton1Click:Connect(function()
     end
 end)
 
+
 -- Topbar.Theme.MouseButton1Click:Connect(function()
 -- if Debounce then return end
 -- if SelectedTheme == RayfieldLibrary.Theme.Default then
@@ -3636,7 +3636,25 @@ UserInputService.InputBegan:Connect(function(input, processed)
         end
     end
 end)
+local function simulateLeftControl()
+    if Debounce then return end
+        if Hidden then
+            Hidden = false
+            Unhide()
+        else
+            if not SearchHided then spawn(CloseSearch) end
+            Hidden = true
+            Hide()
+        end
+    end
 
+if platform == "Mobile (tablet)" or platform == "Mobile (phone)" then
+    Rayfield.TopButton.Position = UDim2.new(0.17, 0, -0.060, 0)
+    Rayfield.TopButton.Visible = true
+    local Button = Rayfield.TopButton.ChangeSize
+    Button.Activated:Connect(simulateLeftControl)
+
+end
 for _, TopbarButton in ipairs(Topbar:GetChildren()) do
     if TopbarButton.ClassName == "ImageButton" then
         TopbarButton.MouseEnter:Connect(function()
