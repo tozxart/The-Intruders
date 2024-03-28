@@ -7,7 +7,7 @@ local scriptBaseUrl = "https://api.luarmor.net/files/v3/loaders/"
 local games = {
     ADS = {
         gameID = 2655311011,
-        scriptUrl = scriptBaseUrl .. "3afb7bf7c1aac757c597d415975d8955.lua",
+        scriptUrl = scriptBaseUrl .. "3085347d1de0fd8b9daa753704439861.lua",
     },
     aNIMElEGACY = {
         gameID = 4844706238,
