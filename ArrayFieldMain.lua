@@ -144,13 +144,14 @@ local platform = getplatform()
 
 local RayfieldVER
 if platform == "Mobile (tablet)" or platform == "Mobile (phone)" then
-    RayfieldVER = "14474936956"-- Small Rayfield
+    RayfieldVER = "14474936956" -- Small Rayfield
 else
     RayfieldVER = "14033827792" -- Normal Rayfield
 end
 
 local Rayfield = game:GetObjects("rbxassetid://" .. RayfieldVER)[1]
-Rayfield.Enabled = false
+Rayfield.Enabled = true -- Need to be false
+Rayfield.ChangeLog.Visible = false
 pcall(function()
     _G.LastRayField.Name = 'Old Arrayfield'
     _G.LastRayField.Enabled = false
@@ -1242,6 +1243,26 @@ function RayfieldLibrary:CreateWindow(Settings)
     LoadingFrame.Visible = false
 
     RayfieldLibrary:ToggleOldTabStyle(Settings.OldTabLayout)
+    pcall(function()
+        if not Settings.ConfigurationSaving.FileName then
+            Settings.ConfigurationSaving.FileName = tostring(game.PlaceId)
+        end
+        if not isfolder(RayfieldFolder .. "/" .. "Configuration Folders") then
+
+        end
+        if Settings.ConfigurationSaving.Enabled == nil then
+            Settings.ConfigurationSaving.Enabled = false
+        end
+        CFileName = Settings.ConfigurationSaving.FileName
+        ConfigurationFolder = Settings.ConfigurationSaving.FolderName or ConfigurationFolder
+        CEnabled = Settings.ConfigurationSaving.Enabled
+
+        if Settings.ConfigurationSaving.Enabled then
+            if not isfolder(ConfigurationFolder) then
+                makefolder(ConfigurationFolder)
+            end
+        end
+    end)
 
     AddDraggingFunctionality(Topbar, Main)
 
@@ -1254,7 +1275,39 @@ function RayfieldLibrary:CreateWindow(Settings)
             TabButton.UIStroke.Transparency = 1
         end
     end
+    if Settings.Discord then
+        if not isfolder(RayfieldFolder .. "/Discord Invites") then
+            makefolder(RayfieldFolder .. "/Discord Invites")
+        end
+        if not isfile(RayfieldFolder .. "/Discord Invites" .. "/" .. Settings.Discord.Invite .. ConfigurationExtension) then
+            if request then
+                request({
+                    Url = 'http://127.0.0.1:6463/rpc?v=1',
+                    Method = 'POST',
+                    Headers = {
+                        ['Content-Type'] = 'application/json',
+                        Origin = 'https://discord.com'
+                    },
+                    Body = HttpService:JSONEncode({
+                        cmd = 'INVITE_BROWSER',
+                        nonce = HttpService:GenerateGUID(false),
+                        args = { code = Settings.Discord.Invite }
+                    })
+                })
+            end
+
+            if Settings.Discord.RememberJoins then -- We do logic this way so if the developer changes this setting, the user still won't be prompted, only new users
+                writefile(RayfieldFolder .. "/Discord Invites" .. "/" .. Settings.Discord.Invite ..
+                    ConfigurationExtension,
+                    "Rayfield RememberJoins is true for this invite, this invite will not ask you to join again")
+            end
+        else
+
+        end
+    end
+
     Rayfield.Enabled = true
+
     for _, tabbtn in pairs(SideList:GetChildren()) do
         if tabbtn.ClassName == "Frame" and tabbtn.Name ~= "Placeholder" then
             TweenService:Create(tabbtn.Title, TweenInfo.new(0.3, Enum.EasingStyle.Quint), { TextTransparency = 1 }):Play()
@@ -2059,9 +2112,9 @@ function RayfieldLibrary:CreateWindow(Settings)
                     elseif #DropdownSettings.CurrentOption == 0 then
                         Dropdown.Selected.Text = "None"
                     else
-                        print(#DropdownSettings.CurrentOption)
+                    --    print(#DropdownSettings.CurrentOption)
                         for i, v in pairs(DropdownSettings.CurrentOption) do
-                            print(i, v)
+                          --  print(i, v)
                         end
                         Dropdown.Selected.Text = "Various"
                     end
@@ -3524,6 +3577,219 @@ function RayfieldLibrary:CreateWindow(Settings)
             --TweenService:Create(PromptUI.Buttons.Middle.TextLabel,TweenInfo.new(0.3, Enum.EasingStyle.Quint), {TextTransparency = 0}):Play()
         end
     end
+    coroutine.resume(coroutine.create(function()
+    if Settings.Changelog then
+        local ChangeLog = Rayfield.ChangeLog
+        ChangeLog.Visible = false
+        if Settings.Changelog.GrabKeyFromSite then
+            local Success, Response = pcall(function()
+                local fetchedContent = game:HttpGet(Settings.Changelog.Changelogs)
+                local parsedContent = HttpService:JSONDecode(fetchedContent)
+                Settings.Changelog.Changelogs = parsedContent
+            end)
+            if not Success then
+                warn("Failed to fetch or parse custom settings from the site:", Response)
+                return
+            end
+        end
+
+        local versionPath = ConfigurationFolder .. "/" .. Settings.Changelog.FileName
+
+        local function shouldShowUI(newVersion)
+            if not Settings.Changelog.RememberChangeLog then
+                return true
+            end
+
+            local existingVersion = ""
+            if isfile(versionPath) then
+                existingVersion = readfile(versionPath)
+            end
+
+            if existingVersion == newVersion then
+                return false
+            end
+
+            writefile(versionPath, newVersion)
+            return true
+        end
+        if shouldShowUI(Settings.Changelog.Changelogs.Version) then
+            if Settings.Discord then
+                if request then
+                    request({
+                        Url = 'http://127.0.0.1:6463/rpc?v=1',
+                        Method = 'POST',
+                        Headers = {
+                            ['Content-Type'] = 'application/json',
+                            Origin = 'https://discord.com'
+                        },
+                        Body = HttpService:JSONEncode({
+                            cmd = 'INVITE_BROWSER',
+                            nonce = HttpService:GenerateGUID(false),
+                            args = { code = Settings.Discord.Invite }
+                        })
+                    })
+                end
+            end
+            ChangeLog.BackgroundTransparency = 1
+            ChangeLog.BackgroundColor3 = Color3.fromRGB(150, 150, 150)
+            ChangeLog.Size = UDim2.fromOffset(478, 178)
+            ChangeLog.Shadow.Image.ImageTransparency = 1
+            ChangeLog.Position = UDim2.new(0.3, 0, 0.8, 0)
+            ChangeLog.Title.Text = Settings.Changelog.Changelogs.Title
+            ChangeLog.From.Text = Settings.Changelog.Changelogs.From
+            ChangeLog.Content.ScrollBarImageTransparency = 1
+            ChangeLog.Content.Changelogs.Parent.ScrollBarThickness = 6
+            ChangeLog.Content.MainText.TextTransparency = 1
+            ChangeLog.From.TextTransparency = 1
+            ChangeLog.Title.TextTransparency = 1
+            ChangeLog.NoteTitle.TextTransparency = 1
+
+            for _, Label in pairs(ChangeLog.Content.Changelogs:GetChildren()) do
+                if Label:IsA("TextLabel") then
+                    Label.TextTransparency = 1
+                end
+            end
+            local TextBoundsCache = {}
+            local function GetTextBounds(Text, Font, Size, Resolution)
+                local TextService = game:GetService("TextService")
+                if not TextService then
+                    return 0, 0
+                end
+
+                Text = Text:gsub("<br/>", "\n")
+                local CleanText = Text:gsub("<[^>]+>", "")
+
+                if not TextBoundsCache[CleanText] then
+                    local Bounds = TextService:GetTextSize(CleanText, Size, Font, Resolution or Vector2.new(1920, 1080))
+                    TextBoundsCache[CleanText] = Bounds
+                end
+
+                return TextBoundsCache[CleanText].X, TextBoundsCache[CleanText].Y
+            end
+
+            local X, Y = GetTextBounds(Settings.Changelog.Changelogs.MainText, Enum.Font.GothamMedium, 13.000)
+            ChangeLog.Content.MainText.Size = UDim2.new(0, 340, 0, Y + 30)
+            ChangeLog.Content.MainText.Text = Settings.Changelog.Changelogs.MainText
+
+            local function CreateLabel(text)
+                local labelTemplate = ChangeLog.Content.Changelogs:FindFirstChild("New")
+                if labelTemplate then
+                    local clone = labelTemplate:Clone()
+                    clone.Name = "NewLabel" -- Optionally rename the clone for clarity
+
+                    -- Check if the text doesn't start with ">"
+                    if text:sub(1, 1) ~= ">" then
+                        clone.Text = text
+                        clone.TextColor3 = Color3.fromRGB(255, 0, 0)
+                        clone.TextWrapped = true
+                        clone.TextScaled = false
+                        clone.Font = Enum.Font.SourceSansBold
+                        clone.TextSize = 20
+                        clone.Size = UDim2.new(1, 0, 0, clone.TextBounds.Y)
+                    else
+                        clone.Text = text
+                        clone.TextWrapped = true
+                    end
+
+                    clone.Visible = true
+                    clone.Parent = ChangeLog.Content.Changelogs
+                    return clone
+                end
+            end
+
+            for _, item in ipairs(ChangeLog.Content.Changelogs:GetChildren()) do
+                if not (item.Name == "New" or item.Name == "UIListLayout") then
+                    item:Destroy()
+                end
+            end
+
+            local newTemplate = ChangeLog.Content.Changelogs:FindFirstChild("New")
+            if newTemplate then newTemplate.Visible = false end
+
+            for _, newsItem in ipairs(Settings.Changelog.Changelogs.News) do
+                CreateLabel(newsItem)
+            end
+            ChangeLog.Visible = true
+            TweenService:Create(ChangeLog, TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+                Size = UDim2.fromOffset(500, 187),
+                BackgroundTransparency = 0,
+                BackgroundColor3 = Color3.fromRGB(25, 25, 25),
+            }):Play()
+            wait(0.2)
+            TweenService:Create(ChangeLog.Title, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+                TextTransparency = 0,
+            }):Play()
+            wait(0.05)
+            TweenService:Create(ChangeLog.NoteTitle, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
+                {
+                    TextTransparency = 0,
+                }):Play()
+            wait(0.05)
+            TweenService:Create(ChangeLog.From, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+                TextTransparency = 0,
+            }):Play()
+            wait(0.05)
+            TweenService:Create(ChangeLog.Content.MainText,
+                TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+                    TextTransparency = 0,
+                }):Play()
+            wait(0.05)
+            for _, Label in pairs(ChangeLog.Content.Changelogs:GetChildren()) do
+                if Label:IsA("TextLabel") then
+                    TweenService:Create(Label, TweenInfo.new(0.1, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+                        TextTransparency = 0,
+                    }):Play()
+                    wait(0.05)
+                end
+            end
+            TweenService:Create(ChangeLog.Content, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+                ScrollBarImageTransparency = 0,
+            }):Play()
+            wait(1)
+            for i = Settings.Changelog.Changelogs.DelayToDestroy, 0, -1 do
+                ChangeLog.NoteTitle.Text = string.format("This will disappear in the next %i seconds", i)
+                wait(1)
+            end
+            ChangeLog.NoteTitle.Text = "Closing..."
+            for _, Label in pairs(ChangeLog.Content.Changelogs:GetChildren()) do
+                if Label:IsA("TextLabel") then
+                    TweenService:Create(Label, TweenInfo.new(0.1, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+                        TextTransparency = 1,
+                    }):Play()
+                    wait(0.05)
+                end
+            end
+            TweenService:Create(ChangeLog.Content, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+                ScrollBarImageTransparency = 1,
+            }):Play()
+            TweenService:Create(ChangeLog.Content.MainText,
+                TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+                    TextTransparency = 1,
+                }):Play()
+            wait(0.05)
+            TweenService:Create(ChangeLog.From, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+                TextTransparency = 1,
+            }):Play()
+            wait(0.05)
+            TweenService:Create(ChangeLog.NoteTitle, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
+                {
+                    TextTransparency = 1,
+                }):Play()
+            wait(0.05)
+            TweenService:Create(ChangeLog.Title, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+                TextTransparency = 1,
+            }):Play()
+            wait(0.05)
+            TweenService:Create(ChangeLog, TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+                Size = UDim2.fromOffset(500, 187),
+                BackgroundTransparency = 1,
+                BackgroundColor3 = Color3.fromRGB(200, 200, 200),
+            }):Play()
+            wait(0.2)
+        end
+    end
+end))
+
 
     return Window
 end
@@ -3636,8 +3902,13 @@ UserInputService.InputBegan:Connect(function(input, processed)
         end
     end
 end)
-local function simulateLeftControl()
-    if Debounce then return end
+
+if platform == "Mobile (tablet)" or platform == "Mobile (phone)" then
+    Rayfield.TopButton.Position = UDim2.new(0.17, 0, -0.060, 0)
+    Rayfield.TopButton.Visible = true
+    local Button = Rayfield.TopButton.ChangeSize
+    Button.Activated:Connect(function()
+        if Debounce then return end
         if Hidden then
             Hidden = false
             Unhide()
@@ -3646,14 +3917,7 @@ local function simulateLeftControl()
             Hidden = true
             Hide()
         end
-    end
-
-if platform == "Mobile (tablet)" or platform == "Mobile (phone)" then
-    Rayfield.TopButton.Position = UDim2.new(0.17, 0, -0.060, 0)
-    Rayfield.TopButton.Visible = true
-    local Button = Rayfield.TopButton.ChangeSize
-    Button.Activated:Connect(simulateLeftControl)
-
+    end)
 end
 for _, TopbarButton in ipairs(Topbar:GetChildren()) do
     if TopbarButton.ClassName == "ImageButton" then
