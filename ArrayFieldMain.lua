@@ -1242,7 +1242,26 @@ function RayfieldLibrary:CreateWindow(Settings)
     LoadingFrame.Visible = false
 
     RayfieldLibrary:ToggleOldTabStyle(Settings.OldTabLayout)
+    pcall(function()
+        if not Settings.ConfigurationSaving.FileName then
+            Settings.ConfigurationSaving.FileName = tostring(game.PlaceId)
+        end
+        if not isfolder(RayfieldFolder .. "/" .. "Configuration Folders") then
 
+        end
+        if Settings.ConfigurationSaving.Enabled == nil then
+            Settings.ConfigurationSaving.Enabled = false
+        end
+        CFileName = Settings.ConfigurationSaving.FileName
+        ConfigurationFolder = Settings.ConfigurationSaving.FolderName or ConfigurationFolder
+        CEnabled = Settings.ConfigurationSaving.Enabled
+
+        if Settings.ConfigurationSaving.Enabled then
+            if not isfolder(ConfigurationFolder) then
+                makefolder(ConfigurationFolder)
+            end
+        end
+    end)
 
     AddDraggingFunctionality(Topbar, Main)
 
@@ -1255,6 +1274,8 @@ function RayfieldLibrary:CreateWindow(Settings)
             TabButton.UIStroke.Transparency = 1
         end
     end
+
+
     Rayfield.Enabled = true
 
     for _, tabbtn in pairs(SideList:GetChildren()) do
@@ -3536,23 +3557,26 @@ function RayfieldLibrary:CreateWindow(Settings)
                 return true
             end
             if shouldShowUI(Settings.Changelog.Changelogs.Version) then
-                if Settings.Discord then
-                    if request then
-                        request({
-                            Url = 'http://127.0.0.1:6463/rpc?v=1',
-                            Method = 'POST',
-                            Headers = {
-                                ['Content-Type'] = 'application/json',
-                                Origin = 'https://discord.com'
-                            },
-                            Body = HttpService:JSONEncode({
-                                cmd = 'INVITE_BROWSER',
-                                nonce = HttpService:GenerateGUID(false),
-                                args = { code = Settings.Discord.Invite }
+                if not platform == "Mobile (tablet)" or not platform == "Mobile (phone)" then
+                    if Settings.Discord then
+                        if request then
+                            request({
+                                Url = 'http://127.0.0.1:6463/rpc?v=1',
+                                Method = 'POST',
+                                Headers = {
+                                    ['Content-Type'] = 'application/json',
+                                    Origin = 'https://discord.com'
+                                },
+                                Body = HttpService:JSONEncode({
+                                    cmd = 'INVITE_BROWSER',
+                                    nonce = HttpService:GenerateGUID(false),
+                                    args = { code = Settings.Discord.Invite }
+                                })
                             })
-                        })
+                        end
                     end
                 end
+
                 ChangeLog.BackgroundTransparency = 1
                 ChangeLog.BackgroundColor3 = Color3.fromRGB(150, 150, 150)
                 ChangeLog.Size = UDim2.fromOffset(478, 178)
@@ -3722,8 +3746,8 @@ function RayfieldLibrary:CreateWindow(Settings)
         end
     end))
 
-
     Elements.Template.Visible = true
+
     return Window
 end
 
