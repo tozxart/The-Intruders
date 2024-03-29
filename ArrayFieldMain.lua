@@ -150,8 +150,7 @@ else
 end
 
 local Rayfield = game:GetObjects("rbxassetid://" .. RayfieldVER)[1]
-Rayfield.Enabled = true -- Need to be false
-Rayfield.ChangeLog.Visible = false
+Rayfield.Enabled = false -- Need to be false
 pcall(function()
     _G.LastRayField.Name = 'Old Arrayfield'
     _G.LastRayField.Enabled = false
@@ -1243,26 +1242,7 @@ function RayfieldLibrary:CreateWindow(Settings)
     LoadingFrame.Visible = false
 
     RayfieldLibrary:ToggleOldTabStyle(Settings.OldTabLayout)
-    pcall(function()
-        if not Settings.ConfigurationSaving.FileName then
-            Settings.ConfigurationSaving.FileName = tostring(game.PlaceId)
-        end
-        if not isfolder(RayfieldFolder .. "/" .. "Configuration Folders") then
 
-        end
-        if Settings.ConfigurationSaving.Enabled == nil then
-            Settings.ConfigurationSaving.Enabled = false
-        end
-        CFileName = Settings.ConfigurationSaving.FileName
-        ConfigurationFolder = Settings.ConfigurationSaving.FolderName or ConfigurationFolder
-        CEnabled = Settings.ConfigurationSaving.Enabled
-
-        if Settings.ConfigurationSaving.Enabled then
-            if not isfolder(ConfigurationFolder) then
-                makefolder(ConfigurationFolder)
-            end
-        end
-    end)
 
     AddDraggingFunctionality(Topbar, Main)
 
@@ -1275,7 +1255,6 @@ function RayfieldLibrary:CreateWindow(Settings)
             TabButton.UIStroke.Transparency = 1
         end
     end
-
     Rayfield.Enabled = true
 
     for _, tabbtn in pairs(SideList:GetChildren()) do
@@ -2369,11 +2348,6 @@ function RayfieldLibrary:CreateWindow(Settings)
                 --
             end
 
-            if Settings.ConfigurationSaving then
-                if Settings.ConfigurationSaving.Enabled and DropdownSettings.Flag then
-                    RayfieldLibrary.Flags[DropdownSettings.Flag] = DropdownSettings
-                end
-            end
             function DropdownSettings:Destroy()
                 Dropdown:Destroy()
             end
@@ -2598,11 +2572,6 @@ function RayfieldLibrary:CreateWindow(Settings)
                 Keybind.Visible = bool
             end
 
-            if Settings.ConfigurationSaving then
-                if Settings.ConfigurationSaving.Enabled and KeybindSettings.Flag then
-                    RayfieldLibrary.Flags[KeybindSettings.Flag] = KeybindSettings
-                end
-            end
             return KeybindSettings
         end
 
@@ -2862,12 +2831,6 @@ function RayfieldLibrary:CreateWindow(Settings)
 
             function ToggleSettings:Visible(bool)
                 Toggle.Visible = bool
-            end
-
-            if Settings.ConfigurationSaving then
-                if Settings.ConfigurationSaving.Enabled and ToggleSettings.Flag then
-                    RayfieldLibrary.Flags[ToggleSettings.Flag] = ToggleSettings
-                end
             end
 
             return ToggleSettings
@@ -3145,12 +3108,6 @@ function RayfieldLibrary:CreateWindow(Settings)
                     ColorPickerSettings.Color = Color3.fromRGB(r, g, b)
                 end
             end)
-
-            if Settings.ConfigurationSaving then
-                if Settings.ConfigurationSaving.Enabled and ColorPickerSettings.Flag then
-                    RayfieldLibrary.Flags[ColorPickerSettings.Flag] = ColorPickerSettings
-                end
-            end
 
             function ColorPickerSettings:Set(RGBColor)
                 ColorPickerSettings.Color = RGBColor
@@ -3433,11 +3390,6 @@ function RayfieldLibrary:CreateWindow(Settings)
                 Slider.Visible = bool
             end
 
-            if Settings.ConfigurationSaving then
-                if Settings.ConfigurationSaving.Enabled and SliderSettings.Flag then
-                    RayfieldLibrary.Flags[SliderSettings.Flag] = SliderSettings
-                end
-            end
             return SliderSettings
         end
 
@@ -3452,7 +3404,6 @@ function RayfieldLibrary:CreateWindow(Settings)
         TweenService:Create(Main, TweenInfo.new(0.7, Enum.EasingStyle.Quint), { Size = UDim2.new(0, 500, 0, 475) }):Play()
     end
     TweenService:Create(Main.Shadow.Image, TweenInfo.new(0.7, Enum.EasingStyle.Quint), { ImageTransparency = 0.4 }):Play()
-
     Topbar.BackgroundTransparency = 1
     Topbar.Divider.Size = UDim2.new(0, 0, 0, 1)
     Topbar.CornerRepair.BackgroundTransparency = 1
@@ -3463,6 +3414,7 @@ function RayfieldLibrary:CreateWindow(Settings)
 
     wait(0.8)
     Topbar.Visible = true
+
     TweenService:Create(Topbar, TweenInfo.new(0.7, Enum.EasingStyle.Quint), { BackgroundTransparency = 0 }):Play()
     TweenService:Create(Topbar.CornerRepair, TweenInfo.new(0.7, Enum.EasingStyle.Quint), { BackgroundTransparency = 0 })
         :Play()
@@ -3719,8 +3671,8 @@ function RayfieldLibrary:CreateWindow(Settings)
                 end
                 TweenService:Create(ChangeLog.Content,
                     TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
-                    ScrollBarImageTransparency = 0,
-                }):Play()
+                        ScrollBarImageTransparency = 0,
+                    }):Play()
                 wait(1)
                 for i = Settings.Changelog.Changelogs.DelayToDestroy, 0, -1 do
                     ChangeLog.NoteTitle.Text = string.format("This will disappear in the next %i seconds", i)
@@ -3737,8 +3689,8 @@ function RayfieldLibrary:CreateWindow(Settings)
                 end
                 TweenService:Create(ChangeLog.Content,
                     TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
-                    ScrollBarImageTransparency = 1,
-                }):Play()
+                        ScrollBarImageTransparency = 1,
+                    }):Play()
                 TweenService:Create(ChangeLog.Content.MainText,
                     TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
                         TextTransparency = 1,
@@ -3770,8 +3722,8 @@ function RayfieldLibrary:CreateWindow(Settings)
         end
     end))
 
-    Elements.Template.Visible = true
 
+    Elements.Template.Visible = true
     return Window
 end
 
