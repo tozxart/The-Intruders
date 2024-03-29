@@ -1,6 +1,10 @@
 {
-    "Version": "1.09",
+    "Version": "1.10",
     "News": [
+      "V 1.10 - 3/29/2024",
+      "> Fixed Auto Dodge stop working in the last map(hope so :).",
+      "> Fixed user info webhook show wrong informations.",
+      "> Fixed UI issue that makes some executors does not work.",
       "V 1.09 - 3/28/2024",
       "> Added Hide Button For Mobile Users.",
       "> Improvet the GUI.",
