@@ -3770,6 +3770,7 @@ function RayfieldLibrary:CreateWindow(Settings)
         end
     end))
 
+    Elements.Template.Visible = true
 
     return Window
 end
