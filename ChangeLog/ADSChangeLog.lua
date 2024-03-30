@@ -1,6 +1,8 @@
 {
-    "Version": "1.10",
+    "Version": "1.11",
     "News": [
+     "V 1.11 - 3/29/2024",
+      "> Fixed Auto Swap Team.",
       "V 1.10 - 3/29/2024",
       "> Fixed Auto Dodge stop working in the last map(hope so :).",
       "> Fixed user info webhook show wrong informations.",
