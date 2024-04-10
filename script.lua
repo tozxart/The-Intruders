@@ -24,7 +24,7 @@ local games = {
     },
     WFS = {
         gameID = 3262314006,
-        scriptUrl = scriptBaseUrl .. "ca4ad6aaf0e289e9c28f4953018f188d.lua",
+        scriptUrl = scriptBaseUrl .. "9cda036a209316df8e62d5e19b7ebb7e.lua",
     },
 }
 
