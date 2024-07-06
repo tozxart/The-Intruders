@@ -2598,7 +2598,7 @@ function RayfieldLibrary:CreateWindow(Settings)
                         child:Destroy()
                     end
                 end
-            
+                DropdownSettings.Selected.Text = "None"
                 -- Reset current option if it's not in the new options
                 if not DropdownSettings.MultipleOptions then
                     if not table.find(NewOptions, DropdownSettings.CurrentOption[1]) then
