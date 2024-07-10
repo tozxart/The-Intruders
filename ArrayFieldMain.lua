@@ -7,11 +7,11 @@ Original by Sirius
 
 -------------------------------
 Arrays  | Designing + Programming + New Features
-and Rafa =D
+and Rafa and tozx
 
 ]]
 
-local Release = "Rafa Edition"
+local Release = "ToZx Edition"
 local NotificationDuration = 6.5
 local RayFieldQuality = {}
 
