@@ -1,8 +1,7 @@
--- repeat
---     wait()
--- until game:IsLoaded()
---  game.Players.LocalPlayer:Kick(
---             "To access the script, please join our Discord server and get the paid version: discord.com/invite/vfkD5VCRKU.")
+repeat
+    wait()
+until game:IsLoaded()
+
 local scriptBaseUrl = "https://api.luarmor.net/files/v3/loaders/"
 
 local games = {
