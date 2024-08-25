@@ -45,4 +45,3 @@ for gameName, gameData in pairs(games) do
         break
     end
 end
-
