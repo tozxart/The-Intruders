@@ -45,32 +45,4 @@ for gameName, gameData in pairs(games) do
         break
     end
 end
-local TurtleNotifications = loadstring(game:HttpGet("https://raw.githubusercontent.com/Turtle-Brand/Turtle-Notifications/main/source.lua"))()
 
--- Create a coroutine to run the notification script with error handling
-coroutine.wrap(function()
-    local success, errorMessage
-
-    -- Use pcall to handle any potential errors
-    success, errorMessage = pcall(function()
-        local NotificationLibrary = TurtleNotifications.new(false, 2)
-
-        NotificationLibrary:QueueNotification(20, "Update Link!", "Get your free key here: https://go.click.ly/Jxeyd. For more info, join our Discord!", "Cancel-Copy", {
-            Cancel = function()
-                print("User chose to ignore the notification.")
-            end,
-            Copy = function()
-                print("User clicked to copy the free key link.")
-                setclipboard("https://go.click.ly/Jxeyd")
-                print("Free key link copied to clipboard.")
-            end
-        })
-
-        NotificationLibrary:SetNotificationDelay(20)
-    end)
-
-    -- Print the error message if something went wrong
-    if not success then
-        warn("Error in notification coroutine: " .. errorMessage)
-    end
-end)()
