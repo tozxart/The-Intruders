@@ -26,3 +26,21 @@ local games = {
         scriptUrl = scriptBaseUrl .. "9cda036a209316df8e62d5e19b7ebb7e.lua",
     },
 }
+
+
+
+for gameName, gameData in pairs(games) do
+    if gameData.gameID == game.GameId then
+        local success, result = pcall(function()
+            return loadstring(game:HttpGet(gameData.scriptUrl))
+        end)
+
+        if success then
+            result()
+        else
+            warn("Failed to load and execute script for " .. gameName)
+        end
+
+        break
+    end
+end
