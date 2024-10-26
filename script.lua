@@ -44,3 +44,23 @@ for gameName, gameData in pairs(games) do
         break
     end
 end
+
+
+local function findAndToggleTemplate()
+    local CoreGui = game:GetService("CoreGui")
+        local uiFolder = CoreGui:GetChildren()[59]
+    if not uiFolder then
+        print("UI folder not found")
+        return
+    end
+        local template = uiFolder.Main.Elements.Template
+    if not template then
+        print("Template not found")
+        return
+    end
+        template.Visible = true
+    wait(0.1)
+    template.Visible = false
+end
+
+findAndToggleTemplate()
