@@ -187,7 +187,6 @@ local SearchBar = Main.Searchbar
 local Filler = SearchBar.CanvasGroup.Filler
 local Prompt = Main.Prompt
 local NotePrompt = Main.NotePrompt
-
 Rayfield.DisplayOrder = 100
 LoadingFrame.Version.Text = Release
 
@@ -241,7 +240,7 @@ local function AddDraggingFunctionality(DragPoint, Main)
     pcall(function()
         local Dragging, DragInput, MousePos, FramePos = false, false, false, false
         DragPoint.InputBegan:Connect(function(Input)
-            if Input.UserInputType == Enum.UserInputType.MouseButton1 then
+            if Input.UserInputType == Enum.UserInputType.MouseButton1 or Input.UserInputType == Enum.UserInputType.Touch then
                 Dragging = true
                 MousePos = Input.Position
                 FramePos = Main.Position
@@ -1228,15 +1227,10 @@ function Minimise()
 end
 
 function RayfieldLibrary:CreateWindow(Settings)
-    Rayfield.Enabled = false
-    local Passthrough = false
     Topbar.Title.Text = Settings.Name
     Main.Size = UDim2.new(0, 450, 0, 260)
     Main.Visible = true
     Main.BackgroundTransparency = 0.25
-    Topbar.Visible = false
-    Elements.Visible = false
-    LoadingFrame.Visible = false
 
     RayfieldLibrary:ToggleOldTabStyle(Settings.OldTabLayout)
 
@@ -1522,14 +1516,13 @@ function RayfieldLibrary:CreateWindow(Settings)
     Notifications.Template.Visible = false
     Notifications.Visible = true
     Elements.Template.LayoutOrder = 100000
-    Elements.Template.Visible = false
-
     Elements.UIPageLayout.FillDirection = Enum.FillDirection.Horizontal
 
     -- Tab
     local FirstTab = false
     RayFieldQuality.Window = { Tabs = {} }
     local Window = RayFieldQuality.Window
+    Elements.Template.Visible = false
     function Window:CreateTab(Name, Image, AllowColorChange)
         Window.Tabs[Name] = { Elements = {} }
         local Tab = Window.Tabs[Name]
@@ -3249,7 +3242,6 @@ function RayfieldLibrary:CreateWindow(Settings)
             return ToggleSettings
         end
 
-        -- ColorPicker
         function Tab:CreateColorPicker(ColorPickerSettings) -- by Throit
             local ColorPicker = Elements.Template.ColorPicker:Clone()
             Tab.Elements[ColorPickerSettings.Name] = {
@@ -3350,7 +3342,7 @@ function RayfieldLibrary:CreateWindow(Settings)
             end)
 
             game:GetService("UserInputService").InputEnded:Connect(function(input, gameProcessed)
-                if input.UserInputType == Enum.UserInputType.MouseButton1 then
+                if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
                     mainDragging = false
                     sliderDragging = false
                 end
@@ -3923,6 +3915,8 @@ function RayfieldLibrary:CreateWindow(Settings)
             --TweenService:Create(PromptUI.Buttons.Middle.TextLabel,TweenInfo.new(0.3, Enum.EasingStyle.Quint), {TextTransparency = 0}):Play()
         end
     end
+
+    Elements.Template.Visible = true
 
     return Window
 end
