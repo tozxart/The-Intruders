@@ -1,6 +1,12 @@
 return {
-  Version = "1.13",
+  Version = "1.14",
   News = {
+    "V 1.14 - 9/13/2025",
+    "> Fixed and improved teleportation system for smoother mob farming.",
+    "> Resolved dungeon-related issues and bugs.",
+    "> Auto buff system fully stabilized and should now work consistently.",
+    "> Overall system stability improvements.",
+    
     "V 1.13 - 9/12/2025",
     "> Fixed long-term farming lag for smoother performance.",
     "> Resolved mob detection issue (new mechanism added to handle loading delays automatically).",
