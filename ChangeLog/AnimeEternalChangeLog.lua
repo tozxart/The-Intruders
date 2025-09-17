@@ -1,6 +1,10 @@
 return {
-  Version = "1.15",
+  Version = "1.16",
   News = {
+    "V 1.16 - 9/18/2025",
+    "> Added: Auto Rejoin toggle and Rejoin Time slider (30m to 3h).",
+    "> Added: auto redeem codes feature.",
+    "> Some improvements to prevent stuck issues.",
     "V 1.15 - 9/17/2025",
     "> Fixed: auto-upgrade, auto-gacha, and auto-progression (fully stable now).",
     "> Fixed: auto-hatch (works properly) + added auto-hatch delay option.",
