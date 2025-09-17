@@ -1,6 +1,17 @@
 return {
-  Version = "1.14",
+  Version = "1.15",
   News = {
+    "V 1.15 - 9/17/2025",
+    "> Fixed: auto-upgrade, auto-gacha, and auto-progression (fully stable now).",
+    "> Fixed: auto-hatch (works properly) + added auto-hatch delay option.",
+    "> Reworked the auto farm - now you can select multiple options to farm.",
+    "> Smarter dropdowns—only display content from worlds you've unlocked.",
+    "> Updated auto-raid—shows raids only from unlocked worlds.",
+    "> Added: anti-public server protection (prevents reports or mutes when kicked and script restarts).",
+    "> Fixed: dungeon webhook bug.",
+    "> Added: raid webhook.",
+    "> Fixed: dropdown rarity displaying incorrect info.",
+    
     "V 1.14 - 9/13/2025",
     "> Fixed and improved teleportation system for smoother mob farming.",
     "> Resolved dungeon-related issues and bugs.",
