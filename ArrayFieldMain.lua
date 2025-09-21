@@ -142,6 +142,10 @@ local Rayfield = game:GetObjects("rbxassetid://" .. RayfieldVER)[1]
 -- Platform detection for scaling
 local isMobile = (platform == "Mobile (tablet)" or platform == "Mobile (phone)")
 
+-- Debug: Print platform detection
+print("Platform detected:", platform)
+print("isMobile:", isMobile)
+
 -- Dynamic scaling function
 local function getScale()
     return 1.0 -- No scaling - use original desktop size for both mobile and desktop
@@ -202,13 +206,29 @@ local Elements = Main.Elements
 local LoadingFrame = Main.LoadingFrame
 local TopList = Main.TabList
 local SideList = Main.SideTabList.Holder
-local TabsList = TopList and SideList
+local TabsList = TopList -- Default to top tabs (old style)
 local SearchBar = Main.Searchbar
 local Filler = SearchBar.CanvasGroup.Filler
 local Prompt = Main.Prompt
 local NotePrompt = Main.NotePrompt
 Rayfield.DisplayOrder = 100
 LoadingFrame.Version.Text = Release
+
+-- Set sidebar size based on platform
+local function setInitialSidebarSize()
+    local mobileSize = UDim2.new(0, 160, 0, 250)  -- Smaller for mobile
+    local mobilePos = UDim2.new(0, 14, 0.5, 22)
+    local desktopSize = UDim2.new(0, 200, 0, 400) -- Larger for desktop
+    local desktopPos = UDim2.new(0, 14, 0.5, 22)
+
+    local targetSize = isMobile and mobileSize or desktopSize
+    local targetPos = isMobile and mobilePos or desktopPos
+
+    Main.SideTabList.Size = targetSize
+    Main.SideTabList.Position = targetPos
+end
+
+setInitialSidebarSize()
 
 --Variables
 
@@ -800,8 +820,17 @@ function CloseSideBar()
                 :Play()
         end
     end
+    -- Use platform-specific sizing for close
+    local mobileSize = UDim2.new(0, 150, 0, 300)  -- Smaller for mobile
+    local mobilePos = UDim2.new(0, 10, 0.5, 22)
+    local desktopSize = UDim2.new(0, 180, 0, 450) -- Larger for desktop
+    local desktopPos = UDim2.new(0, 10, 0.5, 22)
+
+    local targetSize = isMobile and mobileSize or desktopSize
+    local targetPos = isMobile and mobilePos or desktopPos
+
     TweenService:Create(Main.SideTabList, TweenInfo.new(0.4, Enum.EasingStyle.Quint),
-        { BackgroundTransparency = 1, Size = UDim2.new(0, 150, 0, 390), Position = UDim2.new(0, 10, 0.5, 22) }):Play()
+        { BackgroundTransparency = 1, Size = targetSize, Position = targetPos }):Play()
     TweenService:Create(Main.SideTabList.UIStroke, TweenInfo.new(0.4, Enum.EasingStyle.Quint), { Transparency = 1 })
         :Play()
     TweenService:Create(Main.SideTabList.RDMT, TweenInfo.new(0.4, Enum.EasingStyle.Quint), { TextTransparency = 1 })
@@ -1153,14 +1182,15 @@ end
 function OpenSideBar()
     Debounce = true
     Main.SideTabList.Visible = true
-    -- Use dynamic scaling for sidebar
-    local mobileSize = UDim2.new(0, 160 * scale, 0, 250 * scale)
-    local mobilePos = UDim2.new(0, 14 * scale, 0.5, 22 * scale)
-    local desktopSize = UDim2.new(0, 160, 0, 300)
+    -- Use platform-specific sizing
+    local mobileSize = UDim2.new(0, 160, 0, 250)  -- Smaller for mobile
+    local mobilePos = UDim2.new(0, 14, 0.5, 22)
+    local desktopSize = UDim2.new(0, 200, 0, 400) -- Larger for desktop
     local desktopPos = UDim2.new(0, 14, 0.5, 22)
 
     local targetSize = isMobile and mobileSize or desktopSize
     local targetPos = isMobile and mobilePos or desktopPos
+
 
     TweenService:Create(Main.SideTabList, TweenInfo.new(0.4, Enum.EasingStyle.Quint),
         { BackgroundTransparency = .03, Size = targetSize, Position = targetPos })
@@ -1307,8 +1337,17 @@ function RayfieldLibrary:CreateWindow(Settings)
                 :Play()
         end
     end
+    -- Use platform-specific sizing
+    local mobileSize = UDim2.new(0, 150, 0, 300)  -- Smaller for mobile
+    local mobilePos = UDim2.new(0, 10, 0.5, 22)
+    local desktopSize = UDim2.new(0, 180, 0, 450) -- Larger for desktop
+    local desktopPos = UDim2.new(0, 10, 0.5, 22)
+
+    local targetSize = isMobile and mobileSize or desktopSize
+    local targetPos = isMobile and mobilePos or desktopPos
+
     TweenService:Create(Main.SideTabList, TweenInfo.new(0, Enum.EasingStyle.Quint),
-        { BackgroundTransparency = 1, Size = UDim2.new(0, 150, 0, 390), Position = UDim2.new(0, 10, 0.5, 22) }):Play()
+        { BackgroundTransparency = 1, Size = targetSize, Position = targetPos }):Play()
     TweenService:Create(Main.SideTabList.UIStroke, TweenInfo.new(0, Enum.EasingStyle.Quint), { Transparency = 1 }):Play()
     TweenService:Create(Main.SideTabList.RDMT, TweenInfo.new(0, Enum.EasingStyle.Quint), { TextTransparency = 1 }):Play()
     -- 	delay(4,function()
@@ -3732,7 +3771,9 @@ function RayfieldLibrary:ToggleOldTabStyle(oldTabStyle)
     if oldTabStyle == nil then oldTabStyle = true end
 
     if not oldTabStyle then
+        -- New tab style (top tabs)
         TopList.Visible = true
+        TabsList = TopList -- Use top tabs
         -- Use dynamic scaling for elements
         local mobileSize = UDim2.new(1, 0, 0, 210 * scale)
         local mobilePos = UDim2.new(0.5, 0, 0.63, 0)
@@ -3742,11 +3783,12 @@ function RayfieldLibrary:ToggleOldTabStyle(oldTabStyle)
         Elements.Size = isMobile and mobileSize or desktopSize
         Elements.Position = isMobile and mobilePos or desktopPos
 
-
         Topbar.Type.Visible = false
         Topbar.Title.Position = UDim2.new(0, 15, 0.5, 0)
     else
+        -- Old tab style (sidebar)
         TopList.Visible = false
+        TabsList = SideList -- Use sidebar tabs
         -- Use dynamic scaling for old tab style elements
         local mobileSize = UDim2.new(1, 0, 0, 250 * scale)
         local mobilePos = UDim2.new(0.5, 0, 0.57, 0)
