@@ -1,3 +1,16 @@
+--[[
+
+ArrayField Interface Suite
+by Arrays
+
+Original by Sirius
+
+-------------------------------
+Arrays  | Designing + Programming + New Features
+and Rafa and tozx
+
+]]
+
 local Release = "ToZx Edition"
 local NotificationDuration = 6.5
 local RayFieldQuality = {}
@@ -99,17 +112,8 @@ local Players = game:GetService("Players")
 local CoreGui = game:GetService("CoreGui")
 local LocalPlayer = game:GetService('Players').LocalPlayer
 local ContentProvider = game:GetService("ContentProvider")
-
 -- local TextService = game:GetService("TextService")
 function getplatform()
-    -- Force mobile detection for testing/scaling purposes
-    -- local DeviceSize = workspace.CurrentCamera.ViewportSize
-    -- if DeviceSize.Y > 600 then
-    --     return "Mobile (tablet)"
-    -- else
-    --     return "Mobile (phone)"
-    -- end
-
     if UserInputService.TouchEnabled and not UserInputService.KeyboardEnabled and not UserInputService.MouseEnabled then
         -- Mobile
         local DeviceSize = workspace.CurrentCamera.ViewportSize
@@ -135,67 +139,39 @@ end
 local platform = getplatform()
 
 
--- Single asset ID with dynamic scaling
-local RayfieldVER = "14033827792" -- Main Rayfield asset ID
+local RayfieldVER
+if platform == "Mobile (tablet)" or platform == "Mobile (phone)" then
+    RayfieldVER = "14474936956" -- Small Rayfield
+else
+    RayfieldVER = "14033827792" -- Normal Rayfield
+end
+
 local Rayfield = game:GetObjects("rbxassetid://" .. RayfieldVER)[1]
-
--- Platform detection for scaling
-local isMobile = (platform == "Mobile (tablet)" or platform == "Mobile (phone)")
-
--- Debug: Print platform detection
-print("Platform detected:", platform)
-print("isMobile:", isMobile)
-
--- Dynamic scaling function
-local function getScale()
-    return 1.0 -- No scaling - use original desktop size for both mobile and desktop
-end
-
-local scale = getScale()
-
--- Apply scaling to all UI elements
-local function applyScaling()
-    -- No scaling applied - use original desktop size for all platforms
-    -- This ensures the UI looks like the full desktop version
-end
-
 Rayfield.Enabled = false -- Need to be false
+Rayfield.ChangeLog.Visible = false
 pcall(function()
     _G.LastRayField.Name = 'Old Arrayfield'
     _G.LastRayField.Enabled = false
 end)
 
--- Apply scaling after asset is loaded
-applyScaling()
-
--- Security: Parent GUI with proper protection
-if gethui then
-    Rayfield.Parent = gethui()
-elseif syn and syn.protect_gui then
-    syn.protect_gui(Rayfield)
-    Rayfield.Parent = CoreGui
-elseif CoreGui:FindFirstChild("RobloxGui") then
-    Rayfield.Parent = CoreGui:FindFirstChild("RobloxGui")
-else
-    Rayfield.Parent = CoreGui
-end
-
--- Security: Disable old instances with same name
-if gethui then
-    for _, Interface in ipairs(gethui():GetChildren()) do
-        if Interface.Name == Rayfield.Name and Interface ~= Rayfield then
-            Interface.Enabled = false
-            Interface.Name = "ArrayField-Old"
+local ParentObject = function(Gui)
+    local success, failure = pcall(function()
+        if get_hidden_gui or gethui then
+            local hiddenUI = get_hidden_gui or gethui
+            Gui.Parent = hiddenUI()
+        elseif (not is_sirhurt_closure) and (syn and syn.protect_gui) then
+            syn.protect_gui(Gui)
+            Gui.Parent = CoreGui
+        elseif CoreGui then
+            Gui.Parent = CoreGui
         end
+    end)
+    if not success and failure then
+        Gui.Parent = LocalPlayer:FindFirstChildWhichIsA("PlayerGui")
     end
-else
-    for _, Interface in ipairs(CoreGui:GetChildren()) do
-        if Interface.Name == Rayfield.Name and Interface ~= Rayfield then
-            Interface.Enabled = false
-            Interface.Name = "ArrayField-Old"
-        end
-    end
+    _G.LastRayField = Rayfield
 end
+ParentObject(Rayfield)
 
 --Object Variables
 
@@ -206,29 +182,13 @@ local Elements = Main.Elements
 local LoadingFrame = Main.LoadingFrame
 local TopList = Main.TabList
 local SideList = Main.SideTabList.Holder
-local TabsList = TopList -- Default to top tabs (old style)
+local TabsList = TopList and SideList
 local SearchBar = Main.Searchbar
 local Filler = SearchBar.CanvasGroup.Filler
 local Prompt = Main.Prompt
 local NotePrompt = Main.NotePrompt
 Rayfield.DisplayOrder = 100
 LoadingFrame.Version.Text = Release
-
--- Set sidebar size based on platform
-local function setInitialSidebarSize()
-    local mobileSize = UDim2.new(0, 160, 0, 250)  -- Smaller for mobile
-    local mobilePos = UDim2.new(0, 14, 0.5, 22)
-    local desktopSize = UDim2.new(0, 200, 0, 400) -- Larger for desktop
-    local desktopPos = UDim2.new(0, 14, 0.5, 22)
-
-    local targetSize = isMobile and mobileSize or desktopSize
-    local targetPos = isMobile and mobilePos or desktopPos
-
-    Main.SideTabList.Size = targetSize
-    Main.SideTabList.Position = targetPos
-end
-
-setInitialSidebarSize()
 
 --Variables
 
@@ -820,17 +780,8 @@ function CloseSideBar()
                 :Play()
         end
     end
-    -- Use platform-specific sizing for close
-    local mobileSize = UDim2.new(0, 150, 0, 300)  -- Smaller for mobile
-    local mobilePos = UDim2.new(0, 10, 0.5, 22)
-    local desktopSize = UDim2.new(0, 180, 0, 450) -- Larger for desktop
-    local desktopPos = UDim2.new(0, 10, 0.5, 22)
-
-    local targetSize = isMobile and mobileSize or desktopSize
-    local targetPos = isMobile and mobilePos or desktopPos
-
     TweenService:Create(Main.SideTabList, TweenInfo.new(0.4, Enum.EasingStyle.Quint),
-        { BackgroundTransparency = 1, Size = targetSize, Position = targetPos }):Play()
+        { BackgroundTransparency = 1, Size = UDim2.new(0, 150, 0, 390), Position = UDim2.new(0, 10, 0.5, 22) }):Play()
     TweenService:Create(Main.SideTabList.UIStroke, TweenInfo.new(0.4, Enum.EasingStyle.Quint), { Transparency = 1 })
         :Play()
     TweenService:Create(Main.SideTabList.RDMT, TweenInfo.new(0.4, Enum.EasingStyle.Quint), { TextTransparency = 1 })
@@ -846,25 +797,16 @@ function Hide()
         task.spawn(CloseSideBar)
     end
     Debounce = true
-    -- Platform-specific notification
-    if isMobile then
-        RayfieldLibrary:Notify({
-            Title = "Interface Hidden",
-            Content = "The interface has been hidden, you can unhide the interface by tapping the button",
-            Duration = 7
-        })
+    RayfieldLibrary:Notify({
+        Title = "Interface Hidden",
+        Content = "The interface has been hidden, you can unhide the interface by tapping Left CTRL",
+        Duration = 7
+    })
+    if platform == "Mobile (tablet)" or platform == "Mobile (phone)" then
+        TweenService:Create(Main, TweenInfo.new(0.5, Enum.EasingStyle.Quint), { Size = UDim2.new(0, 500, 0, 300) }):Play()
     else
-        RayfieldLibrary:Notify({
-            Title = "Interface Hidden",
-            Content = "The interface has been hidden, you can unhide the interface by pressing K",
-            Duration = 7
-        })
+        TweenService:Create(Main, TweenInfo.new(0.5, Enum.EasingStyle.Quint), { Size = UDim2.new(0, 470, 0, 400) }):Play()
     end
-    -- Use dynamic scaling instead of platform-specific sizes
-    local mobileSize = UDim2.new(0, 500 * scale, 0, 300 * scale)
-    local desktopSize = UDim2.new(0, 470 * scale, 0, 400 * scale)
-    local targetSize = isMobile and mobileSize or desktopSize
-    TweenService:Create(Main, TweenInfo.new(0.5, Enum.EasingStyle.Quint), { Size = targetSize }):Play()
     TweenService:Create(Main.Topbar, TweenInfo.new(0.5, Enum.EasingStyle.Quint), { Size = UDim2.new(0, 470, 0, 45) })
         :Play()
     TweenService:Create(Main, TweenInfo.new(0.5, Enum.EasingStyle.Quint), { BackgroundTransparency = 1 }):Play()
@@ -932,11 +874,11 @@ function Unhide()
     Debounce = true
     Main.Position = UDim2.new(0.5, 0, 0.5, 0)
     Main.Visible = true
-    -- Use dynamic scaling for unhide
-    local mobileSize = UDim2.new(0, 500 * scale, 0, 300 * scale)
-    local desktopSize = UDim2.new(0, 500 * scale, 0, 475 * scale)
-    local targetSize = isMobile and mobileSize or desktopSize
-    TweenService:Create(Main, TweenInfo.new(0.5, Enum.EasingStyle.Quint), { Size = targetSize }):Play()
+    if platform == "Mobile (tablet)" or platform == "Mobile (phone)" then
+        TweenService:Create(Main, TweenInfo.new(0.5, Enum.EasingStyle.Quint), { Size = UDim2.new(0, 500, 0, 300) }):Play()
+    else
+        TweenService:Create(Main, TweenInfo.new(0.5, Enum.EasingStyle.Quint), { Size = UDim2.new(0, 500, 0, 475) }):Play()
+    end
     TweenService:Create(Main.Topbar, TweenInfo.new(0.5, Enum.EasingStyle.Quint), { Size = UDim2.new(0, 500, 0, 45) })
         :Play()
     TweenService:Create(Main.Shadow.Image, TweenInfo.new(0.7, Enum.EasingStyle.Quint), { ImageTransparency = 0.4 }):Play()
@@ -1082,11 +1024,11 @@ function Maximise()
     TweenService:Create(Topbar.CornerRepair, TweenInfo.new(0.5, Enum.EasingStyle.Quint), { BackgroundTransparency = 0 })
         :Play()
     TweenService:Create(Topbar.Divider, TweenInfo.new(0.5, Enum.EasingStyle.Quint), { BackgroundTransparency = 0 }):Play()
-    -- Use dynamic scaling for maximise
-    local mobileSize = UDim2.new(0, 500 * scale, 0, 300 * scale)
-    local desktopSize = UDim2.new(0, 500 * scale, 0, 475 * scale)
-    local targetSize = isMobile and mobileSize or desktopSize
-    TweenService:Create(Main, TweenInfo.new(0.5, Enum.EasingStyle.Quint), { Size = targetSize }):Play()
+    if platform == "Mobile (tablet)" or platform == "Mobile (phone)" then
+        TweenService:Create(Main, TweenInfo.new(0.5, Enum.EasingStyle.Quint), { Size = UDim2.new(0, 500, 0, 300) }):Play()
+    else
+        TweenService:Create(Main, TweenInfo.new(0.5, Enum.EasingStyle.Quint), { Size = UDim2.new(0, 500, 0, 475) }):Play()
+    end
     TweenService:Create(Topbar, TweenInfo.new(0.5, Enum.EasingStyle.Quint), { Size = UDim2.new(0, 500, 0, 45) }):Play()
     TabsList.Visible = true
     wait(0.2)
@@ -1182,19 +1124,15 @@ end
 function OpenSideBar()
     Debounce = true
     Main.SideTabList.Visible = true
-    -- Use platform-specific sizing
-    local mobileSize = UDim2.new(0, 160, 0, 250)  -- Smaller for mobile
-    local mobilePos = UDim2.new(0, 14, 0.5, 22)
-    local desktopSize = UDim2.new(0, 200, 0, 400) -- Larger for desktop
-    local desktopPos = UDim2.new(0, 14, 0.5, 22)
-
-    local targetSize = isMobile and mobileSize or desktopSize
-    local targetPos = isMobile and mobilePos or desktopPos
-
-
-    TweenService:Create(Main.SideTabList, TweenInfo.new(0.4, Enum.EasingStyle.Quint),
-        { BackgroundTransparency = .03, Size = targetSize, Position = targetPos })
-        :Play()
+    if platform == "Mobile (tablet)" or platform == "Mobile (phone)" then
+        TweenService:Create(Main.SideTabList, TweenInfo.new(0.4, Enum.EasingStyle.Quint),
+            { BackgroundTransparency = .03, Size = UDim2.new(0, 160, 0, 250), Position = UDim2.new(0, 14, 0.5, 22) })
+            :Play()
+    else
+        TweenService:Create(Main.SideTabList, TweenInfo.new(0.4, Enum.EasingStyle.Quint),
+            { BackgroundTransparency = .03, Size = UDim2.new(0, 160, 0, 405), Position = UDim2.new(0, 14, 0.5, 22) })
+            :Play()
+    end
 
     TweenService:Create(Main.SideTabList.UIStroke, TweenInfo.new(0.4, Enum.EasingStyle.Quint), { Transparency = 0 })
         :Play()
@@ -1309,6 +1247,231 @@ function RayfieldLibrary:CreateWindow(Settings)
         end
     end
 
+    coroutine.resume(coroutine.create(function()
+        if Settings.Changelog then
+            local ChangeLog = Rayfield.ChangeLog
+            ChangeLog.Visible = false
+            if Settings.Changelog.GrabKeyFromSite then
+                local Success, Response = pcall(function()
+                    local fetchedContent = game:HttpGet(Settings.Changelog.Changelogs)
+                    local parsedContent = HttpService:JSONDecode(fetchedContent)
+                    Settings.Changelog.Changelogs = parsedContent
+                end)
+                if not Success then
+                    warn("Failed to fetch or parse custom settings from the site:", Response)
+                    return
+                end
+            end
+            local intrudersFolder = "The Intruders"
+            local changelogFilename = "ChangeLog.txt"
+            local versionPath = intrudersFolder .. "/" .. Settings.Changelog.FileName
+
+            local function shouldShowUI(newVersion)
+                if not Settings.Changelog.RememberChangeLog then
+                    return true
+                end
+
+                local existingVersion = ""
+                if isfile(versionPath) then
+                    existingVersion = readfile(versionPath)
+                end
+
+                if existingVersion == newVersion then
+                    return false
+                end
+
+                writefile(versionPath, newVersion)
+                return true
+            end
+
+            if shouldShowUI(Settings.Changelog.Changelogs.Version) then
+                if not platform == "Mobile (tablet)" or not platform == "Mobile (phone)" then
+                    if Settings.Discord then
+                        if request then
+                            request({
+                                Url = 'http://127.0.0.1:6463/rpc?v=1',
+                                Method = 'POST',
+                                Headers = {
+                                    ['Content-Type'] = 'application/json',
+                                    Origin = 'https://discord.com'
+                                },
+                                Body = HttpService:JSONEncode({
+                                    cmd = 'INVITE_BROWSER',
+                                    nonce = HttpService:GenerateGUID(false),
+                                    args = { code = Settings.Discord.Invite }
+                                })
+                            })
+                        end
+                    end
+                end
+                ChangeLog.BackgroundTransparency = 1
+                ChangeLog.BackgroundColor3 = Color3.fromRGB(150, 150, 150)
+                ChangeLog.Size = UDim2.fromOffset(478, 178)
+                ChangeLog.Shadow.Image.ImageTransparency = 1
+                ChangeLog.Position = UDim2.new(0.3, 0, 0.8, 0)
+                ChangeLog.Title.Text = Settings.Changelog.Changelogs.Title
+                ChangeLog.From.Text = Settings.Changelog.Changelogs.From
+                ChangeLog.Content.ScrollBarImageTransparency = 1
+                ChangeLog.Content.Changelogs.Parent.ScrollBarThickness = 6
+                ChangeLog.Content.MainText.TextTransparency = 1
+                ChangeLog.From.TextTransparency = 1
+                ChangeLog.Title.TextTransparency = 1
+                ChangeLog.NoteTitle.TextTransparency = 1
+
+                for _, Label in pairs(ChangeLog.Content.Changelogs:GetChildren()) do
+                    if Label:IsA("TextLabel") then
+                        Label.TextTransparency = 1
+                    end
+                end
+                local TextBoundsCache = {}
+                local function GetTextBounds(Text, Font, Size, Resolution)
+                    local TextService = game:GetService("TextService")
+                    if not TextService then
+                        return 0, 0
+                    end
+
+                    Text = Text:gsub("<br/>", "\n")
+                    local CleanText = Text:gsub("<[^>]+>", "")
+
+                    if not TextBoundsCache[CleanText] then
+                        local Bounds = TextService:GetTextSize(CleanText, Size, Font,
+                            Resolution or Vector2.new(1920, 1080))
+                        TextBoundsCache[CleanText] = Bounds
+                    end
+
+                    return TextBoundsCache[CleanText].X, TextBoundsCache[CleanText].Y
+                end
+
+                local X, Y = GetTextBounds(Settings.Changelog.Changelogs.MainText, Enum.Font.GothamMedium, 13.000)
+                ChangeLog.Content.MainText.Size = UDim2.new(0, 340, 0, Y + 30)
+                ChangeLog.Content.MainText.Text = Settings.Changelog.Changelogs.MainText
+
+                local function CreateLabel(text)
+                    local labelTemplate = ChangeLog.Content.Changelogs:FindFirstChild("New")
+                    if labelTemplate then
+                        local clone = labelTemplate:Clone()
+                        clone.Name = "NewLabel" -- Optionally rename the clone for clarity
+
+                        -- Check if the text doesn't start with ">"
+                        if text:sub(1, 1) ~= ">" then
+                            clone.Text = text
+                            clone.TextColor3 = Color3.fromRGB(255, 0, 0)
+                            clone.TextWrapped = true
+                            clone.TextScaled = false
+                            clone.Font = Enum.Font.SourceSansBold
+                            clone.TextSize = 20
+                            clone.Size = UDim2.new(1, 0, 0, clone.TextBounds.Y)
+                        else
+                            clone.Text = text
+                            clone.TextWrapped = true
+                        end
+
+                        clone.Visible = true
+                        clone.Parent = ChangeLog.Content.Changelogs
+                        return clone
+                    end
+                end
+
+                for _, item in ipairs(ChangeLog.Content.Changelogs:GetChildren()) do
+                    if not (item.Name == "New" or item.Name == "UIListLayout") then
+                        item:Destroy()
+                    end
+                end
+
+                local newTemplate = ChangeLog.Content.Changelogs:FindFirstChild("New")
+                if newTemplate then newTemplate.Visible = false end
+
+                for _, newsItem in ipairs(Settings.Changelog.Changelogs.News) do
+                    CreateLabel(newsItem)
+                end
+                ChangeLog.Visible = true
+                TweenService:Create(ChangeLog, TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+                    Size = UDim2.fromOffset(500, 187),
+                    BackgroundTransparency = 0,
+                    BackgroundColor3 = Color3.fromRGB(25, 25, 25),
+                }):Play()
+                wait(0.2)
+                TweenService:Create(ChangeLog.Title, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
+                    {
+                        TextTransparency = 0,
+                    }):Play()
+                wait(0.05)
+                TweenService:Create(ChangeLog.NoteTitle,
+                    TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
+                    {
+                        TextTransparency = 0,
+                    }):Play()
+                wait(0.05)
+                TweenService:Create(ChangeLog.From, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
+                    {
+                        TextTransparency = 0,
+                    }):Play()
+                wait(0.05)
+                TweenService:Create(ChangeLog.Content.MainText,
+                    TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+                        TextTransparency = 0,
+                    }):Play()
+                wait(0.05)
+                for _, Label in pairs(ChangeLog.Content.Changelogs:GetChildren()) do
+                    if Label:IsA("TextLabel") then
+                        TweenService:Create(Label, TweenInfo.new(0.1, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+                            TextTransparency = 0,
+                        }):Play()
+                        wait(0.05)
+                    end
+                end
+                TweenService:Create(ChangeLog.Content,
+                    TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+                        ScrollBarImageTransparency = 0,
+                    }):Play()
+                wait(1)
+                for i = Settings.Changelog.Changelogs.DelayToDestroy, 0, -1 do
+                    ChangeLog.NoteTitle.Text = string.format("This will disappear in the next %i seconds", i)
+                    wait(1)
+                end
+                ChangeLog.NoteTitle.Text = "Closing..."
+                for _, Label in pairs(ChangeLog.Content.Changelogs:GetChildren()) do
+                    if Label:IsA("TextLabel") then
+                        TweenService:Create(Label, TweenInfo.new(0.1, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+                            TextTransparency = 1,
+                        }):Play()
+                        wait(0.05)
+                    end
+                end
+                TweenService:Create(ChangeLog.Content,
+                    TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+                        ScrollBarImageTransparency = 1,
+                    }):Play()
+                TweenService:Create(ChangeLog.Content.MainText,
+                    TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+                        TextTransparency = 1,
+                    }):Play()
+                wait(0.05)
+                TweenService:Create(ChangeLog.From, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
+                    {
+                        TextTransparency = 1,
+                    }):Play()
+                wait(0.05)
+                TweenService:Create(ChangeLog.NoteTitle,
+                    TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
+                    {
+                        TextTransparency = 1,
+                    }):Play()
+                wait(0.05)
+                TweenService:Create(ChangeLog.Title, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
+                    {
+                        TextTransparency = 1,
+                    }):Play()
+                wait(0.05)
+                TweenService:Create(ChangeLog, TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+                    Size = UDim2.fromOffset(500, 187),
+                    BackgroundTransparency = 1,
+                    BackgroundColor3 = Color3.fromRGB(200, 200, 200),
+                }):Play()
+                wait(0.2)
+            end
+        end
+    end))
     local s, r = pcall(function()
         if Settings.Discord then
             request({
@@ -1337,17 +1500,8 @@ function RayfieldLibrary:CreateWindow(Settings)
                 :Play()
         end
     end
-    -- Use platform-specific sizing
-    local mobileSize = UDim2.new(0, 150, 0, 300)  -- Smaller for mobile
-    local mobilePos = UDim2.new(0, 10, 0.5, 22)
-    local desktopSize = UDim2.new(0, 180, 0, 450) -- Larger for desktop
-    local desktopPos = UDim2.new(0, 10, 0.5, 22)
-
-    local targetSize = isMobile and mobileSize or desktopSize
-    local targetPos = isMobile and mobilePos or desktopPos
-
     TweenService:Create(Main.SideTabList, TweenInfo.new(0, Enum.EasingStyle.Quint),
-        { BackgroundTransparency = 1, Size = targetSize, Position = targetPos }):Play()
+        { BackgroundTransparency = 1, Size = UDim2.new(0, 150, 0, 390), Position = UDim2.new(0, 10, 0.5, 22) }):Play()
     TweenService:Create(Main.SideTabList.UIStroke, TweenInfo.new(0, Enum.EasingStyle.Quint), { Transparency = 1 }):Play()
     TweenService:Create(Main.SideTabList.RDMT, TweenInfo.new(0, Enum.EasingStyle.Quint), { TextTransparency = 1 }):Play()
     -- 	delay(4,function()
@@ -1923,10 +2077,10 @@ function RayfieldLibrary:CreateWindow(Settings)
                 Paragraph.Parent = TabPage
             end
 
-            local textSize = TextService:GetTextSize(Paragraph.Content.Text, Paragraph.Content.TextSize,
-                Paragraph.Content.Font, Vector2.new(math.huge, math.huge))
-            Paragraph.Content.Size = UDim2.new(0, 438, 0, textSize.Y)
-            Paragraph.Size = UDim2.new(0, 465, 0, textSize.Y + 40)
+            -- local textSize = TextService:GetTextSize(Paragraph.Content.Text, Paragraph.Content.TextSize, Paragraph.Content.Font, Vector2.new(math.huge, math.huge))
+            -- Paragraph.Content.Size = UDim2.new(0, 438, 0, textSize.Y)
+            -- --Paragraph.Content.Position = UDim2.new(0,465, 0,76)
+            -- Paragraph.Size = UDim2.new(0,465, 0, textSize.Y + 40)
 
             Paragraph.BackgroundTransparency = 1
             Paragraph.UIStroke.Transparency = 1
@@ -1948,12 +2102,6 @@ function RayfieldLibrary:CreateWindow(Settings)
             function ParagraphValue:Set(NewParagraphSettings)
                 Paragraph.Title.Text = NewParagraphSettings.Title
                 Paragraph.Content.Text = NewParagraphSettings.Content
-
-                -- Recalculate text size and update UI element sizes
-                local textSize = TextService:GetTextSize(Paragraph.Content.Text, Paragraph.Content.TextSize,
-                    Paragraph.Content.Font, Vector2.new(math.huge, math.huge))
-                Paragraph.Content.Size = UDim2.new(0, 438, 0, textSize.Y)
-                Paragraph.Size = UDim2.new(0, 465, 0, textSize.Y + 40)
             end
 
             function ParagraphValue:SetTitle(newTitle)
@@ -1962,12 +2110,6 @@ function RayfieldLibrary:CreateWindow(Settings)
 
             function ParagraphValue:SetContent(newContent)
                 Paragraph.Content.Text = newContent
-
-                -- Recalculate text size and update UI element sizes
-                local textSize = TextService:GetTextSize(Paragraph.Content.Text, Paragraph.Content.TextSize,
-                    Paragraph.Content.Font, Vector2.new(math.huge, math.huge))
-                Paragraph.Content.Size = UDim2.new(0, 438, 0, textSize.Y)
-                Paragraph.Size = UDim2.new(0, 465, 0, textSize.Y + 40)
             end
 
             return ParagraphValue
@@ -3672,11 +3814,11 @@ function RayfieldLibrary:CreateWindow(Settings)
 
     Elements.Visible = true
 
-    -- Use dynamic scaling for window creation
-    local mobileSize = UDim2.new(0, 500 * scale, 0, 300 * scale)
-    local desktopSize = UDim2.new(0, 500 * scale, 0, 475 * scale)
-    local targetSize = isMobile and mobileSize or desktopSize
-    TweenService:Create(Main, TweenInfo.new(0.7, Enum.EasingStyle.Quint), { Size = targetSize }):Play()
+    if platform == "Mobile (tablet)" or platform == "Mobile (phone)" then
+        TweenService:Create(Main, TweenInfo.new(0.7, Enum.EasingStyle.Quint), { Size = UDim2.new(0, 500, 0, 300) }):Play()
+    else
+        TweenService:Create(Main, TweenInfo.new(0.7, Enum.EasingStyle.Quint), { Size = UDim2.new(0, 500, 0, 475) }):Play()
+    end
     TweenService:Create(Main.Shadow.Image, TweenInfo.new(0.7, Enum.EasingStyle.Quint), { ImageTransparency = 0.4 }):Play()
 
     Topbar.BackgroundTransparency = 1
@@ -3783,32 +3925,27 @@ function RayfieldLibrary:ToggleOldTabStyle(oldTabStyle)
     if oldTabStyle == nil then oldTabStyle = true end
 
     if not oldTabStyle then
-        -- New tab style (top tabs)
         TopList.Visible = true
-        TabsList = TopList -- Use top tabs
-        -- Use dynamic scaling for elements
-        local mobileSize = UDim2.new(1, 0, 0, 210 * scale)
-        local mobilePos = UDim2.new(0.5, 0, 0.63, 0)
-        local desktopSize = UDim2.new(1, 0, 0, 364 * scale)
-        local desktopPos = UDim2.new(0.5, 0, 0.5, 45 * scale)
+        if platform == "Mobile (tablet)" or platform == "Mobile (phone)" then
+            Elements.Size = UDim2.new(1, 0, 0, 210)
+            Elements.Position = UDim2.new(0.5, 0, 0.63, 0)
+        else
+            Elements.Size = UDim2.new(1, 0, 0, 364)
+            Elements.Position = UDim2.new(0.5, 0, 0.5, 45)
+        end
 
-        Elements.Size = isMobile and mobileSize or desktopSize
-        Elements.Position = isMobile and mobilePos or desktopPos
 
         Topbar.Type.Visible = false
         Topbar.Title.Position = UDim2.new(0, 15, 0.5, 0)
     else
-        -- Old tab style (sidebar)
         TopList.Visible = false
-        TabsList = SideList -- Use sidebar tabs
-        -- Use dynamic scaling for old tab style elements
-        local mobileSize = UDim2.new(1, 0, 0, 250 * scale)
-        local mobilePos = UDim2.new(0.5, 0, 0.57, 0)
-        local desktopSize = UDim2.new(1, 0, 0, 409 * scale)
-        local desktopPos = UDim2.new(0.5, 0, 0.555, 0)
-
-        Elements.Size = isMobile and mobileSize or desktopSize
-        Elements.Position = isMobile and mobilePos or desktopPos
+        if platform == "Mobile (tablet)" or platform == "Mobile (phone)" then
+            Elements.Size = UDim2.new(1, 0, 0, 250)
+            Elements.Position = UDim2.new(0.5, 0, 0.57, 0)
+        else
+            Elements.Size = UDim2.new(1, 0, 0, 409)
+            Elements.Position = UDim2.new(0.5, 0, 0.555, 0)
+        end
 
         Topbar.Type.Visible = true
         Topbar.Title.Position = UDim2.new(0, 45, 0.5, 0)
@@ -3880,7 +4017,7 @@ end)
 -- end)
 
 UserInputService.InputBegan:Connect(function(input, processed)
-    if (input.KeyCode == Enum.KeyCode.K and not processed) then
+    if (input.KeyCode == Enum.KeyCode.LeftControl and not processed) then
         if Debounce then return end
         if Hidden then
             Hidden = false
@@ -3893,117 +4030,21 @@ UserInputService.InputBegan:Connect(function(input, processed)
     end
 end)
 
-if isMobile then
-    -- Debug: Print what we find
-    print("Looking for TopButton in mobile mode...")
-
-    -- Find all TopButton elements
-    local allTopButtons = {}
-    local function findAllTopButtons(parent)
-        for _, child in pairs(parent:GetChildren()) do
-            if child.Name == "TopButton" then
-                table.insert(allTopButtons, child)
-                print("Found TopButton:", child.Name, "Visible:", child.Visible, "Has Title:",
-                    child:FindFirstChild("Title") ~= nil)
-            end
-            -- Recursively search children
-            findAllTopButtons(child)
-        end
-    end
-
-    findAllTopButtons(Rayfield)
-    print("Found", #allTopButtons, "TopButton elements")
-
-    -- Find the correct TopButton (the one with Title child)
-    local correctButton = nil
-    local oldButton = nil
-
-    for _, button in pairs(allTopButtons) do
-        if button:FindFirstChild("Title") then
-            correctButton = button
-            print("Found correct TopButton with Title")
+if platform == "Mobile (tablet)" or platform == "Mobile (phone)" then
+    Rayfield.TopButton.Position = UDim2.new(0.17, 0, -0.060, 0)
+    Rayfield.TopButton.Visible = true
+    local Button = Rayfield.TopButton.ChangeSize
+    Button.Activated:Connect(function()
+        if Debounce then return end
+        if Hidden then
+            Hidden = false
+            Unhide()
         else
-            oldButton = button
-            print("Found old TopButton without Title")
+            if not SearchHided then spawn(CloseSearch) end
+            Hidden = true
+            Hide()
         end
-    end
-
-    -- Hide the old button and show the correct one
-    if oldButton then
-        oldButton.Visible = false
-        print("Hidden old TopButton")
-    end
-
-    if correctButton then
-        -- Make it visible (keep original position from asset)
-        correctButton.Visible = true
-        print("Set correct TopButton visible (keeping original position)")
-
-        -- Debug: Print all children of the correct button
-        print("Children of correct TopButton:")
-        for _, child in pairs(correctButton:GetChildren()) do
-            print("  -", child.Name, child.ClassName)
-        end
-
-        -- Try multiple ways to find the button
-        local Button = nil
-
-        -- Method 1: Direct child
-        Button = correctButton:FindFirstChild("ChangeSize")
-        if Button then
-            print("Found ChangeSize as direct child")
-        end
-
-        -- Method 2: Look for any button-like element
-        if not Button then
-            for _, child in pairs(correctButton:GetChildren()) do
-                if child:IsA("GuiButton") or child:IsA("ImageButton") or child:IsA("TextButton") then
-                    Button = child
-                    print("Found button-like element:", child.Name, child.ClassName)
-                    break
-                end
-            end
-        end
-
-        -- Method 3: Look for any element with "Change" in the name
-        if not Button then
-            for _, child in pairs(correctButton:GetChildren()) do
-                if string.find(child.Name:lower(), "change") then
-                    Button = child
-                    print("Found element with 'change' in name:", child.Name)
-                    break
-                end
-            end
-        end
-
-        print("Final Button found:", Button)
-
-        if Button then
-            -- Connect the button event
-            Button.Activated:Connect(function()
-                print("Button pressed! Hidden:", Hidden)
-                if Debounce then
-                    print("Debounce active, ignoring")
-                    return
-                end
-                if Hidden then
-                    Hidden = false
-                    print("Unhiding...")
-                    Unhide()
-                else
-                    if not SearchHided then spawn(CloseSearch) end
-                    Hidden = true
-                    print("Hiding...")
-                    Hide()
-                end
-            end)
-            print("Connected button successfully")
-        else
-            print("No button found to connect!")
-        end
-    else
-        print("No correct TopButton found!")
-    end
+    end)
 end
 for _, TopbarButton in ipairs(Topbar:GetChildren()) do
     if TopbarButton.ClassName == "ImageButton" then
