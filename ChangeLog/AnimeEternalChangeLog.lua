@@ -1,6 +1,10 @@
 return {
-  Version = "1.16",
+  Version = "1.17",
   News = {
+     "V 1.17 - 9/23/2025",
+    "> Rewrote the join system for improved performance",
+    "> Fixed dungeon issue where it sometimes failed.",
+    "Report any errors ASAP so I can fix them quickly.",
     "V 1.16 - 9/18/2025",
     "> Added: Auto Rejoin toggle and Rejoin Time slider (30m to 3h).",
     "> Added: auto redeem codes feature.",
