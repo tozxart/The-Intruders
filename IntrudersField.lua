@@ -103,33 +103,33 @@ local ContentProvider = game:GetService("ContentProvider")
 local TextService = game:GetService("TextService")
 function getplatform()
     -- Force mobile detection for testing/scaling purposes
-    local DeviceSize = workspace.CurrentCamera.ViewportSize
-    if DeviceSize.Y > 600 then
-        return "Mobile (tablet)"
-    else
-        return "Mobile (phone)"
-    end
+    -- local DeviceSize = workspace.CurrentCamera.ViewportSize
+    -- if DeviceSize.Y > 600 then
+    --     return "Mobile (tablet)"
+    -- else
+    --     return "Mobile (phone)"
+    -- end
 
-    --     if UserInputService.TouchEnabled and not UserInputService.KeyboardEnabled and not UserInputService.MouseEnabled then
-    --         -- Mobile
-    --         local DeviceSize = workspace.CurrentCamera.ViewportSize
-    --         if DeviceSize.Y > 600 then
-    --             return "Mobile (tablet)"
-    --         else
-    --             return "Mobile (phone)"
-    --         end
-    --     elseif not UserInputService.TouchEnabled and UserInputService.KeyboardEnabled and UserInputService.MouseEnabled then
-    --         -- Computer device
-    --         return "Desktop"
-    --     elseif UserInputService.TouchEnabled and UserInputService.KeyboardEnabled and UserInputService.MouseEnabled then
-    --         -- Additional code for computer device with touchscreen
-    --         return "Desktop with touchscreen"
-    --     elseif UserInputService.GamepadEnabled and not UserInputService.KeyboardEnabled and not UserInputService.MouseEnabled then
-    --         -- Additional code for console device
-    --         return "Console"
-    --     else
-    --         return "Unknown"
-    --     end
+    if UserInputService.TouchEnabled and not UserInputService.KeyboardEnabled and not UserInputService.MouseEnabled then
+        -- Mobile
+        local DeviceSize = workspace.CurrentCamera.ViewportSize
+        if DeviceSize.Y > 600 then
+            return "Mobile (tablet)"
+        else
+            return "Mobile (phone)"
+        end
+    elseif not UserInputService.TouchEnabled and UserInputService.KeyboardEnabled and UserInputService.MouseEnabled then
+        -- Computer device
+        return "Desktop"
+    elseif UserInputService.TouchEnabled and UserInputService.KeyboardEnabled and UserInputService.MouseEnabled then
+        -- Additional code for computer device with touchscreen
+        return "Desktop with touchscreen"
+    elseif UserInputService.GamepadEnabled and not UserInputService.KeyboardEnabled and not UserInputService.MouseEnabled then
+        -- Additional code for console device
+        return "Console"
+    else
+        return "Unknown"
+    end
 end
 
 local platform = getplatform()
@@ -243,6 +243,7 @@ local SideBarClosed = true
 local BarType = 'Top'
 local HoverTime = 0.3
 local Notifications = Rayfield.Notifications
+local CurrentTabStyle = true -- Store current tab style (true = old style, false = new style)
 
 local SelectedTheme = RayfieldLibrary.Theme.Default
 
@@ -947,6 +948,24 @@ function Unhide()
     TweenService:Create(Main.Topbar.CornerRepair, TweenInfo.new(0.5, Enum.EasingStyle.Quint),
         { BackgroundTransparency = 0 }):Play()
     TweenService:Create(Main.Topbar.Title, TweenInfo.new(0.5, Enum.EasingStyle.Quint), { TextTransparency = 0 }):Play()
+
+    -- Reapply tab style when GUI is reopened
+    RayfieldLibrary:ToggleOldTabStyle(CurrentTabStyle)
+
+    -- Restore TopList children transparency if using new tab style
+    if TabsList == TopList then
+        for _, tabbtn in ipairs(TopList:GetChildren()) do
+            if tabbtn.ClassName == "Frame" and tabbtn.Name ~= "Placeholder" then
+                TweenService:Create(tabbtn.Image, TweenInfo.new(0.3, Enum.EasingStyle.Quint), { ImageTransparency = 0 })
+                    :Play()
+                TweenService:Create(tabbtn.Title, TweenInfo.new(0.3, Enum.EasingStyle.Quint), { TextTransparency = 0 })
+                    :Play()
+                TweenService:Create(tabbtn.Shadow, TweenInfo.new(0.3, Enum.EasingStyle.Quint), { ImageTransparency = 0 })
+                    :Play()
+            end
+        end
+    end
+
     if Minimised then
         spawn(Maximise)
     end
@@ -3784,14 +3803,20 @@ end
 function RayfieldLibrary:ToggleOldTabStyle(oldTabStyle)
     if oldTabStyle == nil then oldTabStyle = true end
 
+    -- Store current tab style
+    CurrentTabStyle = oldTabStyle
+
     if not oldTabStyle then
         -- New tab style (top tabs)
         TopList.Visible = true
         TabsList = TopList -- Use top tabs
 
-        -- Fix TabList position for new tab style
-        TopList.Position = UDim2.new(0.5, 0, 0.23, 0)
-
+        if isMobile then
+            -- Fix TabList position for new tab style
+            TopList.Position = UDim2.new(0.5, 0, 0.23, 0)
+        else
+            TopList.Position = UDim2.new(0.5, 0, 0.16, 0)
+        end
         -- Use dynamic scaling for elements
         local mobileSize = UDim2.new(1, 0, 0, 210 * scale)
         local mobilePos = UDim2.new(0.5, 0, 0.63, 0)
