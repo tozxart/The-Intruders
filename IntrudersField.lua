@@ -103,33 +103,33 @@ local ContentProvider = game:GetService("ContentProvider")
 local TextService = game:GetService("TextService")
 function getplatform()
     -- Force mobile detection for testing/scaling purposes
-    -- local DeviceSize = workspace.CurrentCamera.ViewportSize
-    -- if DeviceSize.Y > 600 then
-    --     return "Mobile (tablet)"
-    -- else
-    --     return "Mobile (phone)"
-    -- end
-
-    if UserInputService.TouchEnabled and not UserInputService.KeyboardEnabled and not UserInputService.MouseEnabled then
-        -- Mobile
-        local DeviceSize = workspace.CurrentCamera.ViewportSize
-        if DeviceSize.Y > 600 then
-            return "Mobile (tablet)"
-        else
-            return "Mobile (phone)"
-        end
-    elseif not UserInputService.TouchEnabled and UserInputService.KeyboardEnabled and UserInputService.MouseEnabled then
-        -- Computer device
-        return "Desktop"
-    elseif UserInputService.TouchEnabled and UserInputService.KeyboardEnabled and UserInputService.MouseEnabled then
-        -- Additional code for computer device with touchscreen
-        return "Desktop with touchscreen"
-    elseif UserInputService.GamepadEnabled and not UserInputService.KeyboardEnabled and not UserInputService.MouseEnabled then
-        -- Additional code for console device
-        return "Console"
+    local DeviceSize = workspace.CurrentCamera.ViewportSize
+    if DeviceSize.Y > 600 then
+        return "Mobile (tablet)"
     else
-        return "Unknown"
+        return "Mobile (phone)"
     end
+
+    --     if UserInputService.TouchEnabled and not UserInputService.KeyboardEnabled and not UserInputService.MouseEnabled then
+    --         -- Mobile
+    --         local DeviceSize = workspace.CurrentCamera.ViewportSize
+    --         if DeviceSize.Y > 600 then
+    --             return "Mobile (tablet)"
+    --         else
+    --             return "Mobile (phone)"
+    --         end
+    --     elseif not UserInputService.TouchEnabled and UserInputService.KeyboardEnabled and UserInputService.MouseEnabled then
+    --         -- Computer device
+    --         return "Desktop"
+    --     elseif UserInputService.TouchEnabled and UserInputService.KeyboardEnabled and UserInputService.MouseEnabled then
+    --         -- Additional code for computer device with touchscreen
+    --         return "Desktop with touchscreen"
+    --     elseif UserInputService.GamepadEnabled and not UserInputService.KeyboardEnabled and not UserInputService.MouseEnabled then
+    --         -- Additional code for console device
+    --         return "Console"
+    --     else
+    --         return "Unknown"
+    --     end
 end
 
 local platform = getplatform()
@@ -3788,6 +3788,10 @@ function RayfieldLibrary:ToggleOldTabStyle(oldTabStyle)
         -- New tab style (top tabs)
         TopList.Visible = true
         TabsList = TopList -- Use top tabs
+
+        -- Fix TabList position for new tab style
+        TopList.Position = UDim2.new(0.5, 0, 0.23, 0)
+
         -- Use dynamic scaling for elements
         local mobileSize = UDim2.new(1, 0, 0, 210 * scale)
         local mobilePos = UDim2.new(0.5, 0, 0.63, 0)
