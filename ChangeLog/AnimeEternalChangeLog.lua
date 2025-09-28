@@ -1,6 +1,17 @@
 return {
-  Version = "1.17",
+  Version = "1.18",
   News = {
+         "V 1.18 - 9/28/2025",
+    "> Added auto roll — request features anytime and they'll be integrated",
+    "> Removed auto-delete weapons (available directly in-game).",
+    "> Removed auto-delete pets (available directly in-game).",
+    "> Fixed rare bugs in Kaiju Dungeon, particularly on mobile devices.",
+    "> Added auto rejoin system for uninterrupted play.",
+    "> Optimized script for stable 24/7 auto farming.",
+    "> Fixed occasional auto hatch lag.",
+    "> Added all the latest game codes.",
+    "> Improved auto gacha — now smooth and reliable.",
+    "> Fixed chest auto-collection issues.",
      "V 1.17 - 9/23/2025",
     "> Rewrote the join system for improved performance",
     "> Fixed dungeon issue where it sometimes failed.",
