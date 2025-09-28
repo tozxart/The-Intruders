@@ -1,6 +1,12 @@
 return {
-  Version = "0.80",
+  Version = "0.81",
   News = {
+    "V 1.15 - 9/16/2025",
+    "> Resolved game GUI not opening bug.",
+    "> Fixed auto tree feature.",
+    "> :star: Fixed auto collect falling stars.",
+    "> Fixed auto hatch issue for season events.",
+    "> Fixed Auto Mining.",
     "V 1.14 - 9/16/2025",
     "> Added Auto Farm Metero .",
     "> Added Auto Buy Merchant .",
