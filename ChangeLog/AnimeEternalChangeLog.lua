@@ -1,7 +1,11 @@
 return {
-  Version = "1.18",
+  Version = "1.19",
   News = {
-         "V 1.18 - 9/28/2025",
+    "V 1.19 - 9/29/2025",
+    "> Introduced rare drops webhook",
+    "> Added x2–x3 raid options.",
+    "> Fixed movement speed issue.",
+     "V 1.18 - 9/28/2025",
     "> Added auto roll — request features anytime and they'll be integrated",
     "> Removed auto-delete weapons (available directly in-game).",
     "> Removed auto-delete pets (available directly in-game).",
