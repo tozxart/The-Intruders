@@ -1,6 +1,15 @@
 return {
-  Version = "0.81",
+  Version = "1.16",
   News = {
+    "V 1.16 - 10/07/2025",
+    "> Fixed auto mine issues",
+    "> Updated auto mine: when teleport is selected, it now uses Tween teleport (the old teleport was detected by the game, causing errors over time)",
+    "> Added Tween service for smoother movement",
+    "> Introduced 'Ores per Room' — select how many ores to farm before moving to the next room",
+    "> Added ore timeout setting",
+    "> Added customizable auto speed — adjust MoveTo speed from the main tab for both Tween and MoveTo modes",
+    "> Added auto rebirth feature",
+    "> Reworked auto dungeon system",
     "V 1.15 - 9/16/2025",
     "> Resolved game GUI not opening bug.",
     "> Fixed auto tree feature.",
