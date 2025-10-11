@@ -1,6 +1,13 @@
 return {
-  Version = "1.20",
+  Version = "1.3",
   News = {
+    "V 1.3 - 10/11/2025",
+    "> Introduced a new Shop feature",
+    "> Added auto exchange for products, keys, food shop, food exchange, and token exchange",
+    "> Updated auto Gacha, Progression, and Upgrades to display your unlocked worlds",
+    "> Fixed (hopefully) auto hatch issues",
+    "> Added new Gacha systeme",
+    "> Added the latest codes",
     "V 1.20 - 10/07/2025",
     "> Added new code",
     "> Added missing gacha features and upgrades",
