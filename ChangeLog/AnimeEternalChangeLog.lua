@@ -1,6 +1,10 @@
 return {
-  Version = "1.3",
+  Version = "1.4",
   News = {
+        "V 1.4 - 10/11/2025",
+    "> Added new raid",
+    "> Added new way of farming to handle new raid ",
+    "> added new codes",
     "V 1.3 - 10/11/2025",
     "> Introduced a new Shop feature",
     "> Added auto exchange for products, keys, food shop, food exchange, and token exchange",
