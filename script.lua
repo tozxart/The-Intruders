@@ -43,7 +43,7 @@ local games = {
     },
     AnimeLastStand = {
         gameID = 4509896324,
-        scriptId = "0885acfb60c80ac6e04770c09539ad42",
+        scriptId = "f9d578c5fa3ab0eae7a4796dc656a730",
     },
 }
 
