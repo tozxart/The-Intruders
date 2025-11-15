@@ -7,7 +7,7 @@ local scriptBaseUrl = "https://api.luarmor.net/files/v3/loaders/"
 local games = {
     ADS = {
         gameID = 2655311011,
-        scriptId = "f9d578c5fa3ab0eae7a4796dc656a730",
+        scriptId = "0885acfb60c80ac6e04770c09539ad42",
     },
     aNIMElEGACY = {
         gameID = 4844706238,
@@ -23,7 +23,7 @@ local games = {
     },
     WFS = {
         gameID = 3262314006,
-        scriptId = "f9d578c5fa3ab0eae7a4796dc656a730",
+        scriptId = "0885acfb60c80ac6e04770c09539ad42",
     },
     AnimeEternal = {
         gameID = 7882829745,
@@ -31,7 +31,7 @@ local games = {
     },
     RebirthChampionsUltimate = {
         gameID = 7178032757,
-        scriptId = "f9d578c5fa3ab0eae7a4796dc656a730",
+        scriptId = "0885acfb60c80ac6e04770c09539ad42",
     },
     AnimeCrusaders = {
         gameID = 7660436108,
@@ -43,7 +43,7 @@ local games = {
     },
     AnimeLastStand = {
         gameID = 4509896324,
-        scriptId = "f9d578c5fa3ab0eae7a4796dc656a730",
+        scriptId = "0885acfb60c80ac6e04770c09539ad42",
     },
 }
 
@@ -382,7 +382,7 @@ local function runUNCTest()
     end
 
     -- FOR TESTING
-   -- return 80 
+    -- return 80
     return rate
 end
 
