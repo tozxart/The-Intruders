@@ -160,9 +160,42 @@ local function applyScaling()
 end
 
 Rayfield.Enabled = false -- Need to be false
+
+
+-- Disable any previously parented Rayfield/Arrayfield instances *before* parenting the new one.
+-- This avoids a 1-frame "template" flash when re-executing.
+local function _DisableOldRayfieldInstances(container)
+    if not container then return end
+    for _, gui in ipairs(container:GetChildren()) do
+        if gui ~= Rayfield and gui:IsA("ScreenGui") then
+            local looksLikeRayfield = false
+            if gui.Name == Rayfield.Name or gui.Name == "Rayfield" or gui.Name == "Arrayfield" or gui.Name == "ArrayField" then
+                looksLikeRayfield = true
+            elseif gui:FindFirstChild("Main") and gui.Main:FindFirstChild("Topbar") and gui.Main:FindFirstChild("Elements") then
+                looksLikeRayfield = true
+            end
+
+            if looksLikeRayfield then
+                pcall(function() gui.Enabled = false end)
+                pcall(function() gui.Name = tostring(gui.Name) .. "-Old" end)
+            end
+        end
+    end
+end
+
 pcall(function()
-    _G.LastRayField.Name = 'Old Arrayfield'
-    _G.LastRayField.Enabled = false
+    if gethui then
+        _DisableOldRayfieldInstances(gethui())
+    end
+end)
+pcall(function()
+    if CoreGui then
+        _DisableOldRayfieldInstances(CoreGui)
+        local robloxGui = CoreGui:FindFirstChild("RobloxGui")
+        if robloxGui then
+            _DisableOldRayfieldInstances(robloxGui)
+        end
+    end
 end)
 
 -- Apply scaling after asset is loaded
