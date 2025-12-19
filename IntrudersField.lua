@@ -245,6 +245,18 @@ local HoverTime = 0.3
 local Notifications = Rayfield.Notifications
 local CurrentTabStyle = true -- Store current tab style (true = old style, false = new style)
 
+-- Some executors may render the ScreenGui for a frame before `CreateWindow()`
+-- gets a chance to hide templates. Force-hide notification templates immediately
+-- to prevent the raw template from appearing as a "ghost" notification.
+pcall(function()
+    if Notifications and Notifications:FindFirstChild("Template") then
+        Notifications.Template.Visible = false
+        if Notifications.Template:FindFirstChild("Actions") and Notifications.Template.Actions:FindFirstChild("Template") then
+            Notifications.Template.Actions.Template.Visible = false
+        end
+    end
+end)
+
 local SelectedTheme = RayfieldLibrary.Theme.Default
 
 function ChangeTheme(ThemeName)
@@ -319,6 +331,338 @@ end
 
 local function UnpackColor(Color)
     return Color3.fromRGB(Color.R, Color.G, Color.B)
+end
+
+--//---------------- LUCIDE ICONS (OPTIONAL) ----------------//
+-- Allows any icon argument to be either:
+-- - number / numeric string: treated as Roblox asset id
+-- - "rbxassetid://<id>" string: used directly
+-- - non-numeric string: treated as Lucide icon name (e.g. "key-round")
+--
+-- Lucide atlas format expected (same as Rayfield icons.lua):
+-- Icons["48px"]["key-round"] = { <assetId:number>, {w,h}, {x,y} }
+RayfieldLibrary._lucide = RayfieldLibrary._lucide or {
+    Loaded = false,
+    Loading = false,
+    Icons = nil,
+    Pending = {},
+    Url = "https://raw.githubusercontent.com/SiriusSoftwareLtd/Rayfield/refs/heads/main/icons.lua",
+}
+
+local function _Trim(s)
+    if type(s) ~= "string" then return s end
+    return (string.match(s, "^%s*(.-)%s*$"))
+end
+
+function RayfieldLibrary:_LoadLucideIconsBlocking()
+    local lucide = self._lucide
+
+    local ok, icons = pcall(function()
+        if rawget(_G, "LucideIcons") ~= nil then
+            return rawget(_G, "LucideIcons")
+        end
+        if getgenv then
+            local env = getgenv()
+            if type(env) == "table" and env.LucideIcons ~= nil then
+                return env.LucideIcons
+            end
+        end
+
+        if isfile and readfile and isfile("LucideIcons.lua") then
+            local src = readfile("LucideIcons.lua")
+            if type(src) == "string" and #src > 0 then
+                local loaded = loadstring(src)
+                if type(loaded) == "function" then
+                    return loaded()
+                end
+            end
+        end
+
+        if type(game) == "userdata" and type(game.HttpGet) == "function" then
+            local url = lucide.Url
+            local content = game:HttpGet(url)
+            if type(content) == "string" and #content > 0 then
+                local loaded = loadstring(content)
+                if type(loaded) == "function" then
+                    return loaded()
+                end
+            end
+        end
+
+        return nil
+    end)
+
+    if ok and type(icons) == "table" then
+        return icons
+    end
+    return nil
+end
+
+function RayfieldLibrary:_FlushLucidePending()
+    local lucide = self._lucide
+    if not (lucide and lucide.Loaded and type(lucide.Icons) == "table") then
+        return
+    end
+
+    local pending = lucide.Pending
+    if type(pending) ~= "table" or #pending == 0 then
+        return
+    end
+
+    for i = #pending, 1, -1 do
+        local item = pending[i]
+        pending[i] = nil
+        if type(item) == "table" and item.imageObject ~= nil then
+            pcall(function()
+                if item.imageObject.Parent ~= nil then
+                    self:_ApplyIcon(item.imageObject, item.icon, item.fallback)
+                end
+            end)
+        end
+    end
+end
+
+function RayfieldLibrary:_StartLucideLoad()
+    local lucide = self._lucide
+    if not lucide or lucide.Loaded or lucide.Loading then
+        return
+    end
+
+    lucide.Loading = true
+
+    task.spawn(function()
+        local icons = self:_LoadLucideIconsBlocking()
+        lucide.Icons = (type(icons) == "table") and icons or nil
+        lucide.Loaded = true
+        lucide.Loading = false
+        self:_FlushLucidePending()
+    end)
+end
+
+function RayfieldLibrary:_TryLoadLucideIcons()
+    local lucide = self._lucide
+    if lucide.Loaded then
+        return lucide.Icons
+    end
+    self:_StartLucideLoad()
+    return nil
+end
+
+function RayfieldLibrary:_ResolveIcon(icon)
+    if icon == nil or icon == false then
+        return nil
+    end
+
+    if type(icon) == "number" then
+        if icon <= 0 then return nil end
+        return "rbxassetid://" .. tostring(icon)
+    end
+
+    if type(icon) ~= "string" then
+        return nil
+    end
+
+    local value = _Trim(icon)
+    if value == nil or value == "" or value == "0" then
+        return nil
+    end
+
+    if string.match(value, "^rbxassetid://%d+$") then
+        return value
+    end
+
+    local asNumber = tonumber(value)
+    if asNumber ~= nil then
+        if asNumber <= 0 then return nil end
+        return "rbxassetid://" .. tostring(asNumber)
+    end
+
+    local icons = self:_TryLoadLucideIcons()
+    if type(icons) == "table" then
+        local sized = icons["48px"]
+        if type(sized) == "table" then
+            local key = string.lower(value)
+            local entry = sized[key]
+            if type(entry) == "table" then
+                local id = entry[1]
+                local rirs = entry[2]
+                local riro = entry[3]
+                if type(id) == "number" and type(rirs) == "table" and type(riro) == "table" then
+                    local rectSize = Vector2.new(rirs[1], rirs[2])
+                    local rectOffset = Vector2.new(riro[1], riro[2])
+                    return "rbxassetid://" .. tostring(id), rectOffset, rectSize
+                end
+            end
+        end
+    end
+
+    return nil
+end
+
+function RayfieldLibrary:_ApplyIcon(imageObject, icon, fallback)
+    if not imageObject then return end
+
+    local image, rectOffset, rectSize = self:_ResolveIcon(icon)
+    if not image and fallback ~= nil then
+        image, rectOffset, rectSize = self:_ResolveIcon(fallback)
+    end
+
+    if not image then
+        local isLucideCandidate = false
+        if type(icon) == "string" then
+            local s = _Trim(icon)
+            if s and s ~= "" and tonumber(s) == nil and not string.match(s, "^rbxassetid://%d+$") then
+                isLucideCandidate = true
+            end
+        end
+
+        if isLucideCandidate then
+            local lucide = self._lucide
+            if lucide and not lucide.Loaded then
+                lucide.Pending = lucide.Pending or {}
+                table.insert(lucide.Pending, { imageObject = imageObject, icon = icon, fallback = fallback })
+                self:_StartLucideLoad()
+            end
+        end
+    end
+
+    if not image then
+        imageObject.Image = "rbxassetid://0"
+        pcall(function()
+            imageObject.ImageRectOffset = Vector2.new(0, 0)
+            imageObject.ImageRectSize = Vector2.new(0, 0)
+        end)
+        return
+    end
+
+    imageObject.Image = image
+    if rectOffset and rectSize then
+        pcall(function()
+            imageObject.ImageRectOffset = rectOffset
+            imageObject.ImageRectSize = rectSize
+        end)
+    else
+        pcall(function()
+            imageObject.ImageRectOffset = Vector2.new(0, 0)
+            imageObject.ImageRectSize = Vector2.new(0, 0)
+        end)
+    end
+end
+
+-- Prefetch Lucide atlas early (non-blocking) so UI build doesn't stall.
+task.spawn(function()
+    RayfieldLibrary:_StartLucideLoad()
+end)
+
+--//---------------- CONFIGURATION SAVING (AUTO) ----------------//
+-- Uses the embedded RayfieldLibrary.Data store (SaveConfig) to persist element state.
+-- Behavior:
+-- - If Window.Settings.ConfigurationSaving.Enabled is true and an element has `Flag`,
+--   the element will auto-load its last saved value on creation.
+-- - Any time the value changes, it auto-saves immediately.
+RayfieldLibrary._configuration = RayfieldLibrary._configuration or { Enabled = false }
+
+function RayfieldLibrary:_EnsureConfigurationSaving(windowSettings)
+    local configurationSaving = windowSettings and windowSettings.ConfigurationSaving
+    if configurationSaving == nil then
+        configurationSaving = {
+            Enabled = true,
+            FolderName = (windowSettings and windowSettings.Name) or "Rayfield",
+            FileName = ((windowSettings and windowSettings.Name) or "Configuration") .. "_UI"
+        }
+    end
+
+    if not configurationSaving.Enabled then
+        self._configuration.Enabled = false
+        self._configuration.Store = nil
+        self._configuration.FolderName = nil
+        self._configuration.FileName = nil
+        return
+    end
+
+    if self._configuration.Enabled and self._configuration.Store then
+        return
+    end
+
+    if not self.Data or not self.Data.new then
+        warn("[IntrudersField] ConfigurationSaving enabled but RayfieldLibrary.Data is missing")
+        return
+    end
+
+    local folderName = configurationSaving.FolderName or windowSettings.Name or "Rayfield"
+    local fileName = configurationSaving.FileName or windowSettings.Name or "Configuration"
+    if type(fileName) ~= "string" then
+        fileName = tostring(fileName)
+    end
+    if not string.match(fileName, "%.json$") then
+        fileName = fileName .. ".json"
+    end
+
+    local ok, storeOrErr = pcall(function()
+        return self.Data.new(folderName, fileName, {})
+    end)
+
+    if ok then
+        self._configuration.Enabled = true
+        self._configuration.Store = storeOrErr
+        self._configuration.FolderName = folderName
+        self._configuration.FileName = fileName
+    else
+        warn("[IntrudersField] Failed to init ConfigurationSaving: " .. tostring(storeOrErr))
+    end
+end
+
+function RayfieldLibrary:_ConfigGet(flag)
+    local cfg = self._configuration
+    if not (cfg and cfg.Enabled and cfg.Store) then return nil end
+    return cfg.Store:Get(flag)
+end
+
+function RayfieldLibrary:_ConfigSet(flag, value)
+    local cfg = self._configuration
+    if not (cfg and cfg.Enabled and cfg.Store) then return end
+    cfg.Store:Set(flag, value)
+end
+
+function RayfieldLibrary:_ConfigGetColor(flag)
+    local packed = self:_ConfigGet(flag)
+    if type(packed) == "table" and packed.R ~= nil and packed.G ~= nil and packed.B ~= nil then
+        return UnpackColor(packed)
+    end
+    return nil
+end
+
+function RayfieldLibrary:_ConfigSetColor(flag, color)
+    self:_ConfigSet(flag, PackColor(color))
+end
+
+function RayfieldLibrary:SaveConfiguration()
+    local cfg = self._configuration
+    if not (cfg and cfg.Enabled and cfg.Store) then return end
+
+    local out = {}
+    for flag, settings in pairs(self.Flags or {}) do
+        if type(settings) == "table" then
+            if settings.Color ~= nil and typeof(settings.Color) == "Color3" then
+                out[flag] = PackColor(settings.Color)
+            elseif settings.CurrentOption ~= nil then
+                out[flag] = settings.CurrentOption
+            elseif settings.CurrentKeybind ~= nil then
+                out[flag] = settings.CurrentKeybind
+            elseif settings.CurrentValue ~= nil then
+                out[flag] = settings.CurrentValue
+            elseif settings.CurrentValue == nil and settings.CurrentText ~= nil then
+                out[flag] = settings.CurrentText
+            end
+        end
+    end
+
+    cfg.Store:Update(out)
+end
+
+function RayfieldLibrary:LoadConfiguration()
+    -- Values are read lazily when elements are created.
+    return true
 end
 
 
@@ -588,7 +932,7 @@ function qNotePrompt(PromptSettings)
     --Settings
     NotePrompt.Title.Text = PromptSettings.Title or ''
     NotePrompt.Description.Text = PromptSettings.Description or ''
-    NotePrompt.Icon.Image = PromptSettings.Icon or 'rbxassetid://4483362748'
+    RayfieldLibrary:_ApplyIcon(NotePrompt.Icon, PromptSettings.Icon, 'rbxassetid://4483362748')
     NotePrompt.Load.BackgroundColor3 = PromptSettings.Color or Color3.fromRGB(90, 90, 90)
     NotePrompt.Load.MouseButton1Down:Once(function(x, y)
         CloseNPrompt()
@@ -644,6 +988,7 @@ end
 
 function RayfieldLibrary:Notify(NotificationSettings)
     spawn(function()
+        NotificationSettings = NotificationSettings or {}
         local ActionCompleted = true
         local Notification = Notifications.Template:Clone()
         Notification.Parent = Notifications
@@ -658,7 +1003,6 @@ function RayfieldLibrary:Notify(NotificationSettings)
             blurlight.FocusDistance = 51.6
             blurlight.InFocusRadius = 50
             blurlight.NearIntensity = 1
-            game:GetService("Debris"):AddItem(script, 0)
         end
 
         Notification.Actions.Template.Visible = false
@@ -696,11 +1040,7 @@ function RayfieldLibrary:Notify(NotificationSettings)
         Notification.Description.TextTransparency = 1
         Notification.Description.TextColor3 = SelectedTheme.TextColor
         Notification.Icon.ImageColor3 = SelectedTheme.TextColor
-        if NotificationSettings.Image then
-            Notification.Icon.Image = "rbxassetid://" .. tostring(NotificationSettings.Image)
-        else
-            Notification.Icon.Image = "rbxassetid://3944680095"
-        end
+        RayfieldLibrary:_ApplyIcon(Notification.Icon, NotificationSettings.Image, "rbxassetid://3944680095")
 
         Notification.Icon.ImageTransparency = 1
 
@@ -1308,6 +1648,7 @@ function Minimise()
 end
 
 function RayfieldLibrary:CreateWindow(Settings)
+    RayfieldLibrary:_EnsureConfigurationSaving(Settings)
     Topbar.Title.Text = Settings.Name
     Main.Size = UDim2.new(0, 450, 0, 260)
     Main.Visible = true
@@ -1408,8 +1749,8 @@ function RayfieldLibrary:CreateWindow(Settings)
         TopTabButton.Size = UDim2.new(0, TopTabButton.Title.TextBounds.X + 30, 0, 30)
 
         if Image then
-            TopTabButton.Image.Image = "rbxassetid://" .. Image
-            SideTabButton.Image.Image = "rbxassetid://" .. Image
+            RayfieldLibrary:_ApplyIcon(TopTabButton.Image, Image)
+            RayfieldLibrary:_ApplyIcon(SideTabButton.Image, Image)
 
             TopTabButton.Title.AnchorPoint = Vector2.new(0, 0.5)
             TopTabButton.Title.Position = UDim2.new(0, 37, 0.5, 0)
@@ -1735,7 +2076,7 @@ function RayfieldLibrary:CreateWindow(Settings)
                 Section.Icon.Visible = false
                 Section.Title.Position = UDim2.new(0, 10, 0, 8)
             else
-                Section.Icon.Image = "rbxassetid://" .. tostring(Icon)
+                RayfieldLibrary:_ApplyIcon(Section.Icon, Icon)
                 Section.Icon.Visible = true
                 Section.Title.Position = UDim2.new(0, 35, 0, 8)
             end
@@ -1996,6 +2337,9 @@ function RayfieldLibrary:CreateWindow(Settings)
 
         -- Input
         function Tab:CreateInput(InputSettings)
+            if Settings.ConfigurationSaving and Settings.ConfigurationSaving.Enabled and not InputSettings.Flag then
+                InputSettings.Flag = InputSettings.Name
+            end
             local Input = Elements.Template.Input:Clone()
             Input.Name = InputSettings.Name
             Input.Title.Text = InputSettings.Name
@@ -2025,6 +2369,15 @@ function RayfieldLibrary:CreateWindow(Settings)
             TweenService:Create(Input.Title, TweenInfo.new(0.7, Enum.EasingStyle.Quint), { TextTransparency = 0 }):Play()
 
             Input.InputFrame.InputBox.PlaceholderText = InputSettings.PlaceholderText
+
+            if Settings.ConfigurationSaving and Settings.ConfigurationSaving.Enabled and InputSettings.Flag then
+                local storedText = RayfieldLibrary:_ConfigGet(InputSettings.Flag)
+                if type(storedText) == "string" then
+                    InputSettings.CurrentValue = storedText
+                end
+            end
+            Input.InputFrame.InputBox.Text = InputSettings.CurrentValue or ""
+
             Input.InputFrame.Size = UDim2.new(0, Input.InputFrame.InputBox.TextBounds.X + 24, 0, 30)
 
             if InputSettings.NumbersOnly or InputSettings.CharacterLimit then
@@ -2062,6 +2415,11 @@ function RayfieldLibrary:CreateWindow(Settings)
                         { BackgroundColor3 = SelectedTheme.ElementBackground }):Play()
                     TweenService:Create(Input.UIStroke, TweenInfo.new(0.6, Enum.EasingStyle.Quint), { Transparency = 0 })
                         :Play()
+                end
+
+                InputSettings.CurrentValue = Input.InputFrame.InputBox.Text
+                if Settings.ConfigurationSaving and Settings.ConfigurationSaving.Enabled and InputSettings.Flag then
+                    RayfieldLibrary:_ConfigSet(InputSettings.Flag, InputSettings.CurrentValue)
                 end
 
                 if InputSettings.RemoveTextAfterFocusLost then Input.InputFrame.InputBox.Text = "" end
@@ -2127,6 +2485,15 @@ function RayfieldLibrary:CreateWindow(Settings)
                 Input.Visible = bool
             end
 
+            if Settings.ConfigurationSaving then
+                if Settings.ConfigurationSaving.Enabled and InputSettings.Flag then
+                    RayfieldLibrary.Flags[InputSettings.Flag] = InputSettings
+                    if RayfieldLibrary:_ConfigGet(InputSettings.Flag) == nil then
+                        RayfieldLibrary:_ConfigSet(InputSettings.Flag, InputSettings.CurrentValue or "")
+                    end
+                end
+            end
+
             return InputSettings
         end
 
@@ -2134,6 +2501,9 @@ function RayfieldLibrary:CreateWindow(Settings)
             local Dropdown = Elements.Template.Dropdown:Clone()
             DropdownSettings.Locked = false
             local SearchBar = Dropdown.List["-SearchBar"]
+            if Settings.ConfigurationSaving and Settings.ConfigurationSaving.Enabled and not DropdownSettings.Flag then
+                DropdownSettings.Flag = DropdownSettings.Name
+            end
             if string.find(DropdownSettings.Name, "closed") then
                 Dropdown.Name = "Dropdown"
             else
@@ -2155,6 +2525,13 @@ function RayfieldLibrary:CreateWindow(Settings)
                 Dropdown.Parent = DropdownSettings.SectionParent.Holder
             else
                 Dropdown.Parent = TabPage
+            end
+
+            if Settings.ConfigurationSaving and Settings.ConfigurationSaving.Enabled and DropdownSettings.Flag then
+                local storedOption = RayfieldLibrary:_ConfigGet(DropdownSettings.Flag)
+                if storedOption ~= nil then
+                    DropdownSettings.CurrentOption = storedOption
+                end
             end
             if typeof(DropdownSettings.CurrentOption) == "string" then
                 DropdownSettings.CurrentOption = { DropdownSettings.CurrentOption }
@@ -2190,10 +2567,7 @@ function RayfieldLibrary:CreateWindow(Settings)
 
             Dropdown.Icon.Visible = false
             if DropdownSettings.Icon then
-                if not string.match(DropdownSettings.Icon, "rbxassetid://") then
-                    DropdownSettings.Icon = "rbxassetid://" .. tostring(DropdownSettings.Icon)
-                end
-                Dropdown.Icon.Image = tostring(DropdownSettings.Icon)
+                RayfieldLibrary:_ApplyIcon(Dropdown.Icon, DropdownSettings.Icon)
                 Dropdown.Icon.Visible = true
                 Dropdown.Title.Position = UDim2.new(0, 50, 0, 22)
             end
@@ -2355,6 +2729,10 @@ function RayfieldLibrary:CreateWindow(Settings)
                             { Transparency = 0 }):Play()
                     end
 
+                    if Settings.ConfigurationSaving and Settings.ConfigurationSaving.Enabled and DropdownSettings.Flag then
+                        RayfieldLibrary:_ConfigSet(DropdownSettings.Flag, DropdownSettings.CurrentOption)
+                    end
+
                     local Success, Response = pcall(function()
                         DropdownSettings.Callback(DropdownSettings.CurrentOption)
                     end)
@@ -2425,6 +2803,10 @@ function RayfieldLibrary:CreateWindow(Settings)
 
                 if not DropdownSettings.MultipleOptions then
                     DropdownSettings.CurrentOption = { DropdownSettings.CurrentOption[1] }
+                end
+
+                if Settings.ConfigurationSaving and Settings.ConfigurationSaving.Enabled and DropdownSettings.Flag then
+                    RayfieldLibrary:_ConfigSet(DropdownSettings.Flag, DropdownSettings.CurrentOption)
                 end
 
                 Refresh()
@@ -2620,6 +3002,9 @@ function RayfieldLibrary:CreateWindow(Settings)
             if Settings.ConfigurationSaving then
                 if Settings.ConfigurationSaving.Enabled and DropdownSettings.Flag then
                     RayfieldLibrary.Flags[DropdownSettings.Flag] = DropdownSettings
+                    if RayfieldLibrary:_ConfigGet(DropdownSettings.Flag) == nil then
+                        RayfieldLibrary:_ConfigSet(DropdownSettings.Flag, DropdownSettings.CurrentOption)
+                    end
                 end
             end
             function DropdownSettings:Destroy()
@@ -2690,6 +3075,9 @@ function RayfieldLibrary:CreateWindow(Settings)
         function Tab:CreateKeybind(KeybindSettings)
             local CheckingForKey = false
             local Keybind = Elements.Template.Keybind:Clone()
+            if Settings.ConfigurationSaving and Settings.ConfigurationSaving.Enabled and not KeybindSettings.Flag then
+                KeybindSettings.Flag = KeybindSettings.Name
+            end
             Keybind.Name = KeybindSettings.Name
             Keybind.Title.Text = KeybindSettings.Name
             Keybind.Visible = true
@@ -2717,6 +3105,13 @@ function RayfieldLibrary:CreateWindow(Settings)
             TweenService:Create(Keybind.UIStroke, TweenInfo.new(0.7, Enum.EasingStyle.Quint), { Transparency = 0 }):Play()
             TweenService:Create(Keybind.Title, TweenInfo.new(0.7, Enum.EasingStyle.Quint), { TextTransparency = 0 })
                 :Play()
+
+            if Settings.ConfigurationSaving and Settings.ConfigurationSaving.Enabled and KeybindSettings.Flag then
+                local storedKey = RayfieldLibrary:_ConfigGet(KeybindSettings.Flag)
+                if type(storedKey) == "string" then
+                    KeybindSettings.CurrentKeybind = storedKey
+                end
+            end
 
             Keybind.KeybindFrame.KeybindBox.Text = KeybindSettings.CurrentKeybind
             Keybind.KeybindFrame.Size = UDim2.new(0, Keybind.KeybindFrame.KeybindBox.TextBounds.X + 24, 0, 30)
@@ -2753,6 +3148,11 @@ function RayfieldLibrary:CreateWindow(Settings)
                         local NewKeyNoEnum = SplitMessage[3]
                         Keybind.KeybindFrame.KeybindBox.Text = tostring(NewKeyNoEnum)
                         KeybindSettings.CurrentKeybind = tostring(NewKeyNoEnum)
+
+                        if Settings.ConfigurationSaving and Settings.ConfigurationSaving.Enabled and KeybindSettings.Flag then
+                            RayfieldLibrary:_ConfigSet(KeybindSettings.Flag, KeybindSettings.CurrentKeybind)
+                        end
+
                         Keybind.KeybindFrame.KeybindBox:ReleaseFocus()
                     end
                 elseif KeybindSettings.CurrentKeybind ~= nil and (input.KeyCode == Enum.KeyCode[KeybindSettings.CurrentKeybind] and not processed) then --Test
@@ -2806,6 +3206,11 @@ function RayfieldLibrary:CreateWindow(Settings)
             function KeybindSettings:Set(NewKeybind)
                 Keybind.KeybindFrame.KeybindBox.Text = tostring(NewKeybind)
                 KeybindSettings.CurrentKeybind = tostring(NewKeybind)
+
+                if Settings.ConfigurationSaving and Settings.ConfigurationSaving.Enabled and KeybindSettings.Flag then
+                    RayfieldLibrary:_ConfigSet(KeybindSettings.Flag, KeybindSettings.CurrentKeybind)
+                end
+
                 Keybind.KeybindFrame.KeybindBox:ReleaseFocus()
             end
 
@@ -2849,6 +3254,9 @@ function RayfieldLibrary:CreateWindow(Settings)
             if Settings.ConfigurationSaving then
                 if Settings.ConfigurationSaving.Enabled and KeybindSettings.Flag then
                     RayfieldLibrary.Flags[KeybindSettings.Flag] = KeybindSettings
+                    if RayfieldLibrary:_ConfigGet(KeybindSettings.Flag) == nil then
+                        RayfieldLibrary:_ConfigSet(KeybindSettings.Flag, KeybindSettings.CurrentKeybind)
+                    end
                 end
             end
             return KeybindSettings
@@ -2857,6 +3265,9 @@ function RayfieldLibrary:CreateWindow(Settings)
         -- Toggle
         function Tab:CreateToggle(ToggleSettings)
             local Toggle = Elements.Template.Toggle:Clone()
+            if Settings.ConfigurationSaving and Settings.ConfigurationSaving.Enabled and not ToggleSettings.Flag then
+                ToggleSettings.Flag = ToggleSettings.Name
+            end
             Toggle.Name = ToggleSettings.Name
             Toggle.Title.Text = ToggleSettings.Name
             Toggle.Visible = true
@@ -2879,6 +3290,17 @@ function RayfieldLibrary:CreateWindow(Settings)
                 Toggle.Switch.Shadow.Visible = false
             end
             ToggleSettings.Locked = false
+
+            if Settings.ConfigurationSaving and Settings.ConfigurationSaving.Enabled and ToggleSettings.Flag then
+                local storedToggle = RayfieldLibrary:_ConfigGet(ToggleSettings.Flag)
+                if type(storedToggle) == "boolean" then
+                    ToggleSettings.CurrentValue = storedToggle
+                end
+            end
+            if ToggleSettings.CurrentValue == nil then
+                ToggleSettings.CurrentValue = false
+            end
+
             TweenService:Create(Toggle, TweenInfo.new(0.7, Enum.EasingStyle.Quint), { BackgroundTransparency = 0 }):Play()
             TweenService:Create(Toggle.UIStroke, TweenInfo.new(0.7, Enum.EasingStyle.Quint), { Transparency = 0 }):Play()
             TweenService:Create(Toggle.Title, TweenInfo.new(0.7, Enum.EasingStyle.Quint), { TextTransparency = 0 }):Play()
@@ -2972,6 +3394,10 @@ function RayfieldLibrary:CreateWindow(Settings)
                         :Play()
                 end
 
+                if Settings.ConfigurationSaving and Settings.ConfigurationSaving.Enabled and ToggleSettings.Flag then
+                    RayfieldLibrary:_ConfigSet(ToggleSettings.Flag, ToggleSettings.CurrentValue)
+                end
+
                 local Success, Response = pcall(function()
                     ToggleSettings.Callback(ToggleSettings.CurrentValue)
                 end)
@@ -3052,6 +3478,11 @@ function RayfieldLibrary:CreateWindow(Settings)
                     TweenService:Create(Toggle.UIStroke, TweenInfo.new(0.6, Enum.EasingStyle.Quint), { Transparency = 0 })
                         :Play()
                 end
+
+                if Settings.ConfigurationSaving and Settings.ConfigurationSaving.Enabled and ToggleSettings.Flag then
+                    RayfieldLibrary:_ConfigSet(ToggleSettings.Flag, ToggleSettings.CurrentValue)
+                end
+
                 local Success, Response = pcall(function()
                     ToggleSettings.Callback(ToggleSettings.CurrentValue)
                 end)
@@ -3115,6 +3546,9 @@ function RayfieldLibrary:CreateWindow(Settings)
             if Settings.ConfigurationSaving then
                 if Settings.ConfigurationSaving.Enabled and ToggleSettings.Flag then
                     RayfieldLibrary.Flags[ToggleSettings.Flag] = ToggleSettings
+                    if RayfieldLibrary:_ConfigGet(ToggleSettings.Flag) == nil then
+                        RayfieldLibrary:_ConfigSet(ToggleSettings.Flag, ToggleSettings.CurrentValue)
+                    end
                 end
             end
 
@@ -3123,6 +3557,9 @@ function RayfieldLibrary:CreateWindow(Settings)
 
         function Tab:CreateColorPicker(ColorPickerSettings) -- by Throit
             local ColorPicker = Elements.Template.ColorPicker:Clone()
+            if Settings.ConfigurationSaving and Settings.ConfigurationSaving.Enabled and not ColorPickerSettings.Flag then
+                ColorPickerSettings.Flag = ColorPickerSettings.Name
+            end
             Tab.Elements[ColorPickerSettings.Name] = {
                 type = 'colorpicker',
                 section = ColorPickerSettings.SectionParent,
@@ -3222,8 +3659,13 @@ function RayfieldLibrary:CreateWindow(Settings)
 
             game:GetService("UserInputService").InputEnded:Connect(function(input, gameProcessed)
                 if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+                    local wasDragging = mainDragging or sliderDragging
                     mainDragging = false
                     sliderDragging = false
+
+                    if wasDragging and Settings.ConfigurationSaving and Settings.ConfigurationSaving.Enabled and ColorPickerSettings.Flag then
+                        RayfieldLibrary:_ConfigSetColor(ColorPickerSettings.Flag, ColorPickerSettings.Color)
+                    end
                 end
             end)
             Main.MouseButton1Down:Connect(function()
@@ -3244,6 +3686,16 @@ function RayfieldLibrary:CreateWindow(Settings)
                 if ColorPickerSettings.Locked then return end
                 sliderDragging = true
             end)
+
+            if Settings.ConfigurationSaving and Settings.ConfigurationSaving.Enabled and ColorPickerSettings.Flag then
+                local storedColor = RayfieldLibrary:_ConfigGetColor(ColorPickerSettings.Flag)
+                if storedColor ~= nil then
+                    ColorPickerSettings.Color = storedColor
+                end
+            end
+            if ColorPickerSettings.Color == nil then
+                ColorPickerSettings.Color = Color3.fromRGB(255, 255, 255)
+            end
 
             local h, s, v = ColorPickerSettings.Color:ToHSV()
             local color = Color3.fromHSV(h, s, v)
@@ -3285,6 +3737,10 @@ function RayfieldLibrary:CreateWindow(Settings)
                 pcall(function() ColorPickerSettings.Callback(Color3.fromHSV(h, s, v)) end)
                 local r, g, b = math.floor((h * 255) + 0.5), math.floor((s * 255) + 0.5), math.floor((v * 255) + 0.5)
                 ColorPickerSettings.Color = Color3.fromRGB(r, g, b)
+
+                if Settings.ConfigurationSaving and Settings.ConfigurationSaving.Enabled and ColorPickerSettings.Flag then
+                    RayfieldLibrary:_ConfigSetColor(ColorPickerSettings.Flag, ColorPickerSettings.Color)
+                end
             end)
             --RGB
             local function rgbBoxes(box, toChange)
@@ -3315,14 +3771,26 @@ function RayfieldLibrary:CreateWindow(Settings)
             ColorPicker.RGB.RInput.InputBox.FocusLost:connect(function()
                 rgbBoxes(ColorPicker.RGB.RInput.InputBox, "R")
                 pcall(function() ColorPickerSettings.Callback(Color3.fromHSV(h, s, v)) end)
+
+                if Settings.ConfigurationSaving and Settings.ConfigurationSaving.Enabled and ColorPickerSettings.Flag then
+                    RayfieldLibrary:_ConfigSetColor(ColorPickerSettings.Flag, ColorPickerSettings.Color)
+                end
             end)
             ColorPicker.RGB.GInput.InputBox.FocusLost:connect(function()
                 rgbBoxes(ColorPicker.RGB.GInput.InputBox, "G")
                 pcall(function() ColorPickerSettings.Callback(Color3.fromHSV(h, s, v)) end)
+
+                if Settings.ConfigurationSaving and Settings.ConfigurationSaving.Enabled and ColorPickerSettings.Flag then
+                    RayfieldLibrary:_ConfigSetColor(ColorPickerSettings.Flag, ColorPickerSettings.Color)
+                end
             end)
             ColorPicker.RGB.BInput.InputBox.FocusLost:connect(function()
                 rgbBoxes(ColorPicker.RGB.BInput.InputBox, "B")
                 pcall(function() ColorPickerSettings.Callback(Color3.fromHSV(h, s, v)) end)
+
+                if Settings.ConfigurationSaving and Settings.ConfigurationSaving.Enabled and ColorPickerSettings.Flag then
+                    RayfieldLibrary:_ConfigSetColor(ColorPickerSettings.Flag, ColorPickerSettings.Color)
+                end
             end)
 
             ColorPicker.HexInput.InputBox.Focused:Connect(function()
@@ -3396,6 +3864,9 @@ function RayfieldLibrary:CreateWindow(Settings)
             if Settings.ConfigurationSaving then
                 if Settings.ConfigurationSaving.Enabled and ColorPickerSettings.Flag then
                     RayfieldLibrary.Flags[ColorPickerSettings.Flag] = ColorPickerSettings
+                    if RayfieldLibrary:_ConfigGet(ColorPickerSettings.Flag) == nil then
+                        RayfieldLibrary:_ConfigSetColor(ColorPickerSettings.Flag, ColorPickerSettings.Color)
+                    end
                 end
             end
 
@@ -3404,6 +3875,10 @@ function RayfieldLibrary:CreateWindow(Settings)
                 h, s, v = ColorPickerSettings.Color:ToHSV()
                 color = Color3.fromHSV(h, s, v)
                 setDisplay()
+
+                if Settings.ConfigurationSaving and Settings.ConfigurationSaving.Enabled and ColorPickerSettings.Flag then
+                    RayfieldLibrary:_ConfigSetColor(ColorPickerSettings.Flag, ColorPickerSettings.Color)
+                end
             end
 
             function ColorPickerSettings:Destroy()
@@ -3474,6 +3949,9 @@ function RayfieldLibrary:CreateWindow(Settings)
         function Tab:CreateSlider(SliderSettings)
             local Dragging = false
             local Slider = Elements.Template.Slider:Clone()
+            if Settings.ConfigurationSaving and Settings.ConfigurationSaving.Enabled and not SliderSettings.Flag then
+                SliderSettings.Flag = SliderSettings.Name
+            end
             Slider.Name = SliderSettings.Name
             Slider.Title.Text = SliderSettings.Name
             Slider.Visible = true
@@ -3499,6 +3977,16 @@ function RayfieldLibrary:CreateWindow(Settings)
             Slider.Main.BackgroundColor3 = SelectedTheme.SliderBackground
             Slider.Main.UIStroke.Color = SelectedTheme.SliderStroke
             Slider.Main.Progress.BackgroundColor3 = SelectedTheme.SliderProgress
+
+            if Settings.ConfigurationSaving and Settings.ConfigurationSaving.Enabled and SliderSettings.Flag then
+                local storedSlider = RayfieldLibrary:_ConfigGet(SliderSettings.Flag)
+                if type(storedSlider) == "number" then
+                    SliderSettings.CurrentValue = storedSlider
+                end
+            end
+            if SliderSettings.CurrentValue == nil then
+                SliderSettings.CurrentValue = SliderSettings.Range and SliderSettings.Range[1] or 0
+            end
 
             TweenService:Create(Slider, TweenInfo.new(0.7, Enum.EasingStyle.Quint), { BackgroundTransparency = 0 }):Play()
             TweenService:Create(Slider.UIStroke, TweenInfo.new(0.7, Enum.EasingStyle.Quint), { Transparency = 0 }):Play()
@@ -3593,6 +4081,10 @@ function RayfieldLibrary:CreateWindow(Settings)
                     end
 
                     SliderSettings.CurrentValue = NewValue
+
+                    if Settings.ConfigurationSaving and Settings.ConfigurationSaving.Enabled and SliderSettings.Flag then
+                        RayfieldLibrary:_ConfigSet(SliderSettings.Flag, SliderSettings.CurrentValue)
+                    end
                 end
             end
             Slider.Main.Interact.MouseButton1Down:Connect(function(X)
@@ -3641,6 +4133,10 @@ function RayfieldLibrary:CreateWindow(Settings)
                         :Play()
                 end
                 SliderSettings.CurrentValue = NewVal
+
+                if Settings.ConfigurationSaving and Settings.ConfigurationSaving.Enabled and SliderSettings.Flag then
+                    RayfieldLibrary:_ConfigSet(SliderSettings.Flag, SliderSettings.CurrentValue)
+                end
             end
 
             function SliderSettings:Destroy()
@@ -3683,6 +4179,9 @@ function RayfieldLibrary:CreateWindow(Settings)
             if Settings.ConfigurationSaving then
                 if Settings.ConfigurationSaving.Enabled and SliderSettings.Flag then
                     RayfieldLibrary.Flags[SliderSettings.Flag] = SliderSettings
+                    if RayfieldLibrary:_ConfigGet(SliderSettings.Flag) == nil then
+                        RayfieldLibrary:_ConfigSet(SliderSettings.Flag, SliderSettings.CurrentValue)
+                    end
                 end
             end
             return SliderSettings
@@ -4066,4 +4565,116 @@ end
 
 
 RayfieldLibrary.UI = Rayfield
+
+--//---------------- SAVE CONFIG (EMBEDDED) ----------------//
+-- Exposed as: RayfieldLibrary.Data.new(folderName, fileName, defaultData)
+-- This mirrors your SaveConfig/Data module so you can keep everything in one file.
+do
+    local Data = {}
+    local DataFunctions = {}
+
+    local function assertFsAvailable()
+        if type(isfolder) ~= "function" or type(makefolder) ~= "function" or type(isfile) ~= "function" or
+            type(readfile) ~= "function" or type(writefile) ~= "function" then
+            error(
+                "[IntrudersField][Data] Missing filesystem functions (isfolder/makefolder/isfile/readfile/writefile). " ..
+                "This save method requires an executor that provides them.",
+                3
+            )
+        end
+    end
+
+    function Data.new(folderName, fileName, data)
+        assertFsAvailable()
+
+        if not isfolder(folderName) then
+            makefolder(folderName)
+        end
+
+        local savedData
+        local path = folderName .. "/" .. fileName
+
+        if isfile(path) then
+            local success, result = pcall(function()
+                return HttpService:JSONDecode(readfile(path))
+            end)
+            if success then
+                savedData = result
+            end
+        end
+
+        if not savedData then
+            savedData = data
+        else
+            for i, v in pairs(data) do
+                if savedData[i] == nil then
+                    savedData[i] = v
+                end
+            end
+        end
+
+        local shouldUpdateFile = false
+        for i, v in pairs(data) do
+            if savedData[i] == nil then
+                savedData[i] = v
+                shouldUpdateFile = true
+            end
+        end
+
+        if shouldUpdateFile then
+            writefile(path, HttpService:JSONEncode(savedData))
+        end
+
+        return setmetatable({
+            Data = savedData,
+            FolderName = folderName,
+            FileName = fileName
+        }, {
+            __index = DataFunctions
+        })
+    end
+
+    function DataFunctions:ResetToDefaults(defaultData)
+        assertFsAvailable()
+        for i, v in pairs(defaultData) do
+            self.Data[i] = v
+        end
+        writefile(self.FolderName .. "/" .. self.FileName, HttpService:JSONEncode(self.Data))
+    end
+
+    function DataFunctions:Update(data)
+        assertFsAvailable()
+        for i, v in pairs(data) do
+            self.Data[i] = v
+        end
+        writefile(self.FolderName .. "/" .. self.FileName, HttpService:JSONEncode(self.Data))
+    end
+
+    function DataFunctions:Set(name, value)
+        assertFsAvailable()
+        local success, errorMsg = pcall(function()
+            self.Data[name] = value
+            writefile(self.FolderName .. "/" .. self.FileName, HttpService:JSONEncode(self.Data))
+        end)
+
+        if not success then
+            warn("[IntrudersField][Data] Error while setting value:", errorMsg)
+        end
+    end
+
+    function DataFunctions:Get(name)
+        local success, result = pcall(function()
+            return self.Data[name]
+        end)
+
+        if success then
+            return result
+        else
+            warn("[IntrudersField][Data] Error while getting value:", result)
+            return nil
+        end
+    end
+
+    RayfieldLibrary.Data = Data
+end
 return RayfieldLibrary
