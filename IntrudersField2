@@ -160,42 +160,9 @@ local function applyScaling()
 end
 
 Rayfield.Enabled = false -- Need to be false
-
-
--- Disable any previously parented Rayfield/Arrayfield instances *before* parenting the new one.
--- This avoids a 1-frame "template" flash when re-executing.
-local function _DisableOldRayfieldInstances(container)
-    if not container then return end
-    for _, gui in ipairs(container:GetChildren()) do
-        if gui ~= Rayfield and gui:IsA("ScreenGui") then
-            local looksLikeRayfield = false
-            if gui.Name == Rayfield.Name or gui.Name == "Rayfield" or gui.Name == "Arrayfield" or gui.Name == "ArrayField" then
-                looksLikeRayfield = true
-            elseif gui:FindFirstChild("Main") and gui.Main:FindFirstChild("Topbar") and gui.Main:FindFirstChild("Elements") then
-                looksLikeRayfield = true
-            end
-
-            if looksLikeRayfield then
-                pcall(function() gui.Enabled = false end)
-                pcall(function() gui.Name = tostring(gui.Name) .. "-Old" end)
-            end
-        end
-    end
-end
-
 pcall(function()
-    if gethui then
-        _DisableOldRayfieldInstances(gethui())
-    end
-end)
-pcall(function()
-    if CoreGui then
-        _DisableOldRayfieldInstances(CoreGui)
-        local robloxGui = CoreGui:FindFirstChild("RobloxGui")
-        if robloxGui then
-            _DisableOldRayfieldInstances(robloxGui)
-        end
-    end
+    _G.LastRayField.Name = 'Old Arrayfield'
+    _G.LastRayField.Enabled = false
 end)
 
 -- Apply scaling after asset is loaded
@@ -364,7 +331,9 @@ end
 -- Icons["48px"]["key-round"] = { <assetId:number>, {w,h}, {x,y} }
 RayfieldLibrary._lucide = RayfieldLibrary._lucide or {
     Loaded = false,
+    Loading = false,
     Icons = nil,
+    Pending = {},
     Url = "https://raw.githubusercontent.com/SiriusSoftwareLtd/Rayfield/refs/heads/main/icons.lua",
 }
 
@@ -373,13 +342,8 @@ local function _Trim(s)
     return (string.match(s, "^%s*(.-)%s*$"))
 end
 
-function RayfieldLibrary:_TryLoadLucideIcons()
+function RayfieldLibrary:_LoadLucideIconsBlocking()
     local lucide = self._lucide
-    if lucide.Loaded then
-        return lucide.Icons
-    end
-
-    lucide.Loaded = true
 
     local ok, icons = pcall(function()
         if rawget(_G, "LucideIcons") ~= nil then
@@ -417,12 +381,59 @@ function RayfieldLibrary:_TryLoadLucideIcons()
     end)
 
     if ok and type(icons) == "table" then
-        lucide.Icons = icons
-    else
-        lucide.Icons = nil
+        return icons
+    end
+    return nil
+end
+
+function RayfieldLibrary:_FlushLucidePending()
+    local lucide = self._lucide
+    if not (lucide and lucide.Loaded and type(lucide.Icons) == "table") then
+        return
     end
 
-    return lucide.Icons
+    local pending = lucide.Pending
+    if type(pending) ~= "table" or #pending == 0 then
+        return
+    end
+
+    for i = #pending, 1, -1 do
+        local item = pending[i]
+        pending[i] = nil
+        if type(item) == "table" and item.imageObject ~= nil then
+            pcall(function()
+                if item.imageObject.Parent ~= nil then
+                    self:_ApplyIcon(item.imageObject, item.icon, item.fallback)
+                end
+            end)
+        end
+    end
+end
+
+function RayfieldLibrary:_StartLucideLoad()
+    local lucide = self._lucide
+    if not lucide or lucide.Loaded or lucide.Loading then
+        return
+    end
+
+    lucide.Loading = true
+
+    task.spawn(function()
+        local icons = self:_LoadLucideIconsBlocking()
+        lucide.Icons = (type(icons) == "table") and icons or nil
+        lucide.Loaded = true
+        lucide.Loading = false
+        self:_FlushLucidePending()
+    end)
+end
+
+function RayfieldLibrary:_TryLoadLucideIcons()
+    local lucide = self._lucide
+    if lucide.Loaded then
+        return lucide.Icons
+    end
+    self:_StartLucideLoad()
+    return nil
 end
 
 function RayfieldLibrary:_ResolveIcon(icon)
@@ -485,6 +496,25 @@ function RayfieldLibrary:_ApplyIcon(imageObject, icon, fallback)
     end
 
     if not image then
+        local isLucideCandidate = false
+        if type(icon) == "string" then
+            local s = _Trim(icon)
+            if s and s ~= "" and tonumber(s) == nil and not string.match(s, "^rbxassetid://%d+$") then
+                isLucideCandidate = true
+            end
+        end
+
+        if isLucideCandidate then
+            local lucide = self._lucide
+            if lucide and not lucide.Loaded then
+                lucide.Pending = lucide.Pending or {}
+                table.insert(lucide.Pending, { imageObject = imageObject, icon = icon, fallback = fallback })
+                self:_StartLucideLoad()
+            end
+        end
+    end
+
+    if not image then
         imageObject.Image = "rbxassetid://0"
         pcall(function()
             imageObject.ImageRectOffset = Vector2.new(0, 0)
@@ -506,6 +536,11 @@ function RayfieldLibrary:_ApplyIcon(imageObject, icon, fallback)
         end)
     end
 end
+
+-- Prefetch Lucide atlas early (non-blocking) so UI build doesn't stall.
+task.spawn(function()
+    RayfieldLibrary:_StartLucideLoad()
+end)
 
 --//---------------- CONFIGURATION SAVING (AUTO) ----------------//
 -- Uses the embedded RayfieldLibrary.Data store (SaveConfig) to persist element state.
