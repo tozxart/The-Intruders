@@ -245,16 +245,26 @@ local HoverTime = 0.3
 local Notifications = Rayfield.Notifications
 local CurrentTabStyle = true -- Store current tab style (true = old style, false = new style)
 
--- Ensure notification templates never appear unless a real notification is pushed.
--- Some executors may render a frame between enabling the ScreenGui and template-hiding.
-pcall(function()
-    if Notifications then
-        Notifications.Visible = false
-        if Notifications:FindFirstChild("Template") then
-            Notifications.Template.Visible = false
+-- Some executors may load the embedded asset with template GuiObjects visible.
+-- Force-hide notification templates up-front so nothing shows until Notify() clones and animates it.
+local function _SanitizeNotificationTemplates()
+    if typeof(Notifications) ~= "Instance" then
+        return
+    end
+
+    local rootTemplate = Notifications:FindFirstChild("Template")
+    if rootTemplate and rootTemplate:IsA("GuiObject") then
+        rootTemplate.Visible = false
+    end
+
+    for _, obj in ipairs(Notifications:GetDescendants()) do
+        if obj.Name == "Template" and obj:IsA("GuiObject") then
+            obj.Visible = false
         end
     end
-end)
+end
+
+_SanitizeNotificationTemplates()
 
 local SelectedTheme = RayfieldLibrary.Theme.Default
 
@@ -987,16 +997,6 @@ end
 
 function RayfieldLibrary:Notify(NotificationSettings)
     spawn(function()
-        -- Ensure holder is visible and the base template stays hidden.
-        pcall(function()
-            if Notifications then
-                Notifications.Visible = true
-                if Notifications:FindFirstChild("Template") then
-                    Notifications.Template.Visible = false
-                end
-            end
-        end)
-
         local ActionCompleted = true
         local Notification = Notifications.Template:Clone()
         Notification.Parent = Notifications
@@ -1729,8 +1729,7 @@ function RayfieldLibrary:CreateWindow(Settings)
     TopList.Template.Visible = false
     SideList.SideTemplate.Visible = false
     Notifications.Template.Visible = false
-    -- Only show notifications when a real notification is created.
-    Notifications.Visible = false
+    Notifications.Visible = true
     Elements.Template.LayoutOrder = 100000
     Elements.UIPageLayout.FillDirection = Enum.FillDirection.Horizontal
 
