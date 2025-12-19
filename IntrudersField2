@@ -245,26 +245,17 @@ local HoverTime = 0.3
 local Notifications = Rayfield.Notifications
 local CurrentTabStyle = true -- Store current tab style (true = old style, false = new style)
 
--- Some executors may load the embedded asset with template GuiObjects visible.
--- Force-hide notification templates up-front so nothing shows until Notify() clones and animates it.
-local function _SanitizeNotificationTemplates()
-    if typeof(Notifications) ~= "Instance" then
-        return
-    end
-
-    local rootTemplate = Notifications:FindFirstChild("Template")
-    if rootTemplate and rootTemplate:IsA("GuiObject") then
-        rootTemplate.Visible = false
-    end
-
-    for _, obj in ipairs(Notifications:GetDescendants()) do
-        if obj.Name == "Template" and obj:IsA("GuiObject") then
-            obj.Visible = false
+-- Some executors may render the ScreenGui for a frame before `CreateWindow()`
+-- gets a chance to hide templates. Force-hide notification templates immediately
+-- to prevent the raw template from appearing as a "ghost" notification.
+pcall(function()
+    if Notifications and Notifications:FindFirstChild("Template") then
+        Notifications.Template.Visible = false
+        if Notifications.Template:FindFirstChild("Actions") and Notifications.Template.Actions:FindFirstChild("Template") then
+            Notifications.Template.Actions.Template.Visible = false
         end
     end
-end
-
-_SanitizeNotificationTemplates()
+end)
 
 local SelectedTheme = RayfieldLibrary.Theme.Default
 
@@ -997,6 +988,7 @@ end
 
 function RayfieldLibrary:Notify(NotificationSettings)
     spawn(function()
+        NotificationSettings = NotificationSettings or {}
         local ActionCompleted = true
         local Notification = Notifications.Template:Clone()
         Notification.Parent = Notifications
@@ -1011,7 +1003,6 @@ function RayfieldLibrary:Notify(NotificationSettings)
             blurlight.FocusDistance = 51.6
             blurlight.InFocusRadius = 50
             blurlight.NearIntensity = 1
-            game:GetService("Debris"):AddItem(script, 0)
         end
 
         Notification.Actions.Template.Visible = false
