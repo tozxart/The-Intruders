@@ -27,10 +27,24 @@ local TweenService = game:GetService("TweenService")
 local CoreGui = game:GetService("CoreGui")
 local Rayfield = game:GetObjects("rbxassetid://12673095331")[1]
 Rayfield.Main:Destroy()
+-- Some executors can render the ScreenGui for a frame as soon as it's parented.
+-- Disable during setup so templates can't flash.
+Rayfield.Enabled = false
 Rayfield.Parent = CoreGui
 local Camera = workspace.CurrentCamera
 
 local Notifications = Rayfield.Notifications
+
+pcall(function()
+    if Notifications and Notifications:FindFirstChild("Template") then
+        Notifications.Template.Visible = false
+        if Notifications.Template:FindFirstChild("Actions") and Notifications.Template.Actions:FindFirstChild("Template") then
+            Notifications.Template.Actions.Template.Visible = false
+        end
+    end
+end)
+
+Rayfield.Enabled = true
 
 local SelectedTheme = RayfieldLibrary.Theme.Default
 
@@ -259,6 +273,7 @@ end)()
 
 function RayfieldLibrary:Notify(NotificationSettings)
     spawn(function()
+        NotificationSettings = NotificationSettings or {}
         local ActionCompleted = true
         local Notification = Notifications.Template:Clone()
         Notification.Parent = Notifications
@@ -266,14 +281,23 @@ function RayfieldLibrary:Notify(NotificationSettings)
         Notification.Visible = true
 
         local blurlight = nil
-        if not getgenv().SecureMode then
+        local secureMode = nil
+        pcall(function()
+            if getgenv then
+                local env = getgenv()
+                if type(env) == "table" then
+                    secureMode = env.SecureMode
+                end
+            end
+        end)
+
+        if not secureMode then
             blurlight = Instance.new("DepthOfFieldEffect", game:GetService("Lighting"))
             blurlight.Enabled = true
             blurlight.FarIntensity = 0
             blurlight.FocusDistance = 51.6
             blurlight.InFocusRadius = 50
             blurlight.NearIntensity = 1
-            game:GetService("Debris"):AddItem(script, 0)
         end
 
         Notification.Actions.Template.Visible = false
@@ -341,12 +365,12 @@ function RayfieldLibrary:Notify(NotificationSettings)
 
 
         -- Requires Graphics Level 8-10
-        if getgenv().SecureMode == nil then
+        if secureMode == nil then
             TweenService:Create(Notification, TweenInfo.new(0.3, Enum.EasingStyle.Quint),
                 { BackgroundTransparency = 0.4 })
                 :Play()
         else
-            if not getgenv().SecureMode then
+            if not secureMode then
                 TweenService:Create(Notification, TweenInfo.new(0.3, Enum.EasingStyle.Quint),
                     { BackgroundTransparency = 0.4 }):Play()
             else
@@ -417,7 +441,7 @@ function RayfieldLibrary:Notify(NotificationSettings)
             { TextTransparency = 1 })
             :Play()
         wait(0.2)
-        if not getgenv().SecureMode then
+        if not secureMode then
             neon:UnbindFrame(Notification.BlurModule)
             blurlight:Destroy()
         end
