@@ -665,8 +665,6 @@ function RayfieldLibrary:LoadConfiguration()
     return true
 end
 
-
-
 local neon = (function() --Open sourced neon module
     local module = {}
 
@@ -1938,38 +1936,40 @@ function RayfieldLibrary:CreateWindow(Settings)
             Button.Interact.MouseButton1Click:Connect(function()
                 if ButtonValue.Locked or ButtonValue.Disabled then return end
                 local Success, Response = pcall(ButtonSettings.Callback)
-                if not Success then
-                    TweenService:Create(Button, TweenInfo.new(0.6, Enum.EasingStyle.Quint),
-                        { BackgroundColor3 = Color3.fromRGB(85, 0, 0) }):Play()
-                    TweenService:Create(Button.ElementIndicator, TweenInfo.new(0.6, Enum.EasingStyle.Quint),
-                        { TextTransparency = 1 }):Play()
-                    TweenService:Create(Button.UIStroke, TweenInfo.new(0.6, Enum.EasingStyle.Quint), { Transparency = 1 })
-                        :Play()
-                    Button.Title.Text = "Callback Error"
-                    print("Rayfield | " .. ButtonSettings.Name .. " Callback Error " .. tostring(Response))
-                    wait(0.5)
-                    Button.Title.Text = ButtonSettings.Name
-                    TweenService:Create(Button, TweenInfo.new(0.6, Enum.EasingStyle.Quint),
-                        { BackgroundColor3 = SelectedTheme.ElementBackground }):Play()
-                    TweenService:Create(Button.UIStroke, TweenInfo.new(0.6, Enum.EasingStyle.Quint), { Transparency = 0 })
-                        :Play()
-                    TweenService:Create(Button.ElementIndicator, TweenInfo.new(0.6, Enum.EasingStyle.Quint),
-                        { TextTransparency = 0.9 }):Play()
-                else
-                    TweenService:Create(Button, TweenInfo.new(0.6, Enum.EasingStyle.Quint),
-                        { BackgroundColor3 = SelectedTheme.ElementBackgroundHover }):Play()
-                    TweenService:Create(Button.ElementIndicator, TweenInfo.new(0.6, Enum.EasingStyle.Quint),
-                        { TextTransparency = 1 }):Play()
-                    TweenService:Create(Button.UIStroke, TweenInfo.new(0.6, Enum.EasingStyle.Quint), { Transparency = 1 })
-                        :Play()
-                    wait(0.2)
-                    TweenService:Create(Button, TweenInfo.new(0.6, Enum.EasingStyle.Quint),
-                        { BackgroundColor3 = SelectedTheme.ElementBackground }):Play()
-                    TweenService:Create(Button.UIStroke, TweenInfo.new(0.6, Enum.EasingStyle.Quint), { Transparency = 0 })
-                        :Play()
-                    TweenService:Create(Button.ElementIndicator, TweenInfo.new(0.6, Enum.EasingStyle.Quint),
-                        { TextTransparency = 0.9 }):Play()
-                end
+                task.spawn(function()
+                    if not Success then
+                        TweenService:Create(Button, TweenInfo.new(0.6, Enum.EasingStyle.Quint),
+                            { BackgroundColor3 = Color3.fromRGB(85, 0, 0) }):Play()
+                        TweenService:Create(Button.ElementIndicator, TweenInfo.new(0.6, Enum.EasingStyle.Quint),
+                            { TextTransparency = 1 }):Play()
+                        TweenService:Create(Button.UIStroke, TweenInfo.new(0.6, Enum.EasingStyle.Quint), { Transparency = 1 })
+                            :Play()
+                        Button.Title.Text = "Callback Error"
+                        print("Rayfield | " .. ButtonSettings.Name .. " Callback Error " .. tostring(Response))
+                        wait(0.5)
+                        Button.Title.Text = ButtonSettings.Name
+                        TweenService:Create(Button, TweenInfo.new(0.6, Enum.EasingStyle.Quint),
+                            { BackgroundColor3 = SelectedTheme.ElementBackground }):Play()
+                        TweenService:Create(Button.UIStroke, TweenInfo.new(0.6, Enum.EasingStyle.Quint), { Transparency = 0 })
+                            :Play()
+                        TweenService:Create(Button.ElementIndicator, TweenInfo.new(0.6, Enum.EasingStyle.Quint),
+                            { TextTransparency = 0.9 }):Play()
+                    else
+                        TweenService:Create(Button, TweenInfo.new(0.6, Enum.EasingStyle.Quint),
+                            { BackgroundColor3 = SelectedTheme.ElementBackgroundHover }):Play()
+                        TweenService:Create(Button.ElementIndicator, TweenInfo.new(0.6, Enum.EasingStyle.Quint),
+                            { TextTransparency = 1 }):Play()
+                        TweenService:Create(Button.UIStroke, TweenInfo.new(0.6, Enum.EasingStyle.Quint), { Transparency = 1 })
+                            :Play()
+                        wait(0.2)
+                        TweenService:Create(Button, TweenInfo.new(0.6, Enum.EasingStyle.Quint),
+                            { BackgroundColor3 = SelectedTheme.ElementBackground }):Play()
+                        TweenService:Create(Button.UIStroke, TweenInfo.new(0.6, Enum.EasingStyle.Quint), { Transparency = 0 })
+                            :Play()
+                        TweenService:Create(Button.ElementIndicator, TweenInfo.new(0.6, Enum.EasingStyle.Quint),
+                            { TextTransparency = 0.9 }):Play()
+                    end
+                end)
             end)
 
             Button.MouseEnter:Connect(function()
@@ -2285,8 +2285,11 @@ function RayfieldLibrary:CreateWindow(Settings)
                 Paragraph.Parent = TabPage
             end
 
-            local textSize = TextService:GetTextSize(Paragraph.Content.Text, Paragraph.Content.TextSize,
-                Paragraph.Content.Font, Vector2.new(math.huge, math.huge))
+            local ok, textSize = pcall(function()
+                return TextService:GetTextSize(Paragraph.Content.Text, Paragraph.Content.TextSize,
+                    Paragraph.Content.Font, Vector2.new(math.huge, math.huge))
+            end)
+            if not ok then textSize = Vector2.new(438, math.max(20, #tostring(Paragraph.Content.Text) / 2)) end
             Paragraph.Content.Size = UDim2.new(0, 438, 0, textSize.Y)
             Paragraph.Size = UDim2.new(0, 465, 0, textSize.Y + 40)
 
@@ -2312,8 +2315,11 @@ function RayfieldLibrary:CreateWindow(Settings)
                 Paragraph.Content.Text = NewParagraphSettings.Content
 
                 -- Recalculate text size and update UI element sizes
-                local textSize = TextService:GetTextSize(Paragraph.Content.Text, Paragraph.Content.TextSize,
-                    Paragraph.Content.Font, Vector2.new(math.huge, math.huge))
+                local ok, textSize = pcall(function()
+                    return TextService:GetTextSize(Paragraph.Content.Text, Paragraph.Content.TextSize,
+                        Paragraph.Content.Font, Vector2.new(math.huge, math.huge))
+                end)
+                if not ok then textSize = Vector2.new(438, math.max(20, #tostring(Paragraph.Content.Text) / 2)) end
                 Paragraph.Content.Size = UDim2.new(0, 438, 0, textSize.Y)
                 Paragraph.Size = UDim2.new(0, 465, 0, textSize.Y + 40)
             end
@@ -2326,8 +2332,11 @@ function RayfieldLibrary:CreateWindow(Settings)
                 Paragraph.Content.Text = newContent
 
                 -- Recalculate text size and update UI element sizes
-                local textSize = TextService:GetTextSize(Paragraph.Content.Text, Paragraph.Content.TextSize,
-                    Paragraph.Content.Font, Vector2.new(math.huge, math.huge))
+                local ok, textSize = pcall(function()
+                    return TextService:GetTextSize(Paragraph.Content.Text, Paragraph.Content.TextSize,
+                        Paragraph.Content.Font, Vector2.new(math.huge, math.huge))
+                end)
+                if not ok then textSize = Vector2.new(438, math.max(20, #tostring(Paragraph.Content.Text) / 2)) end
                 Paragraph.Content.Size = UDim2.new(0, 438, 0, textSize.Y)
                 Paragraph.Size = UDim2.new(0, 465, 0, textSize.Y + 40)
             end
