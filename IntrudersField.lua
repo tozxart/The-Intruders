@@ -1719,6 +1719,7 @@ function RayfieldLibrary:CreateWindow(Settings)
     SideList.SideTemplate.Visible = false
     Notifications.Template.Visible = false
     Notifications.Visible = true
+
     Elements.Template.LayoutOrder = 100000
     Elements.UIPageLayout.FillDirection = Enum.FillDirection.Horizontal
 
@@ -1942,7 +1943,8 @@ function RayfieldLibrary:CreateWindow(Settings)
                             { BackgroundColor3 = Color3.fromRGB(85, 0, 0) }):Play()
                         TweenService:Create(Button.ElementIndicator, TweenInfo.new(0.6, Enum.EasingStyle.Quint),
                             { TextTransparency = 1 }):Play()
-                        TweenService:Create(Button.UIStroke, TweenInfo.new(0.6, Enum.EasingStyle.Quint), { Transparency = 1 })
+                        TweenService:Create(Button.UIStroke, TweenInfo.new(0.6, Enum.EasingStyle.Quint),
+                            { Transparency = 1 })
                             :Play()
                         Button.Title.Text = "Callback Error"
                         print("Rayfield | " .. ButtonSettings.Name .. " Callback Error " .. tostring(Response))
@@ -1950,7 +1952,8 @@ function RayfieldLibrary:CreateWindow(Settings)
                         Button.Title.Text = ButtonSettings.Name
                         TweenService:Create(Button, TweenInfo.new(0.6, Enum.EasingStyle.Quint),
                             { BackgroundColor3 = SelectedTheme.ElementBackground }):Play()
-                        TweenService:Create(Button.UIStroke, TweenInfo.new(0.6, Enum.EasingStyle.Quint), { Transparency = 0 })
+                        TweenService:Create(Button.UIStroke, TweenInfo.new(0.6, Enum.EasingStyle.Quint),
+                            { Transparency = 0 })
                             :Play()
                         TweenService:Create(Button.ElementIndicator, TweenInfo.new(0.6, Enum.EasingStyle.Quint),
                             { TextTransparency = 0.9 }):Play()
@@ -1959,12 +1962,14 @@ function RayfieldLibrary:CreateWindow(Settings)
                             { BackgroundColor3 = SelectedTheme.ElementBackgroundHover }):Play()
                         TweenService:Create(Button.ElementIndicator, TweenInfo.new(0.6, Enum.EasingStyle.Quint),
                             { TextTransparency = 1 }):Play()
-                        TweenService:Create(Button.UIStroke, TweenInfo.new(0.6, Enum.EasingStyle.Quint), { Transparency = 1 })
+                        TweenService:Create(Button.UIStroke, TweenInfo.new(0.6, Enum.EasingStyle.Quint),
+                            { Transparency = 1 })
                             :Play()
                         wait(0.2)
                         TweenService:Create(Button, TweenInfo.new(0.6, Enum.EasingStyle.Quint),
                             { BackgroundColor3 = SelectedTheme.ElementBackground }):Play()
-                        TweenService:Create(Button.UIStroke, TweenInfo.new(0.6, Enum.EasingStyle.Quint), { Transparency = 0 })
+                        TweenService:Create(Button.UIStroke, TweenInfo.new(0.6, Enum.EasingStyle.Quint),
+                            { Transparency = 0 })
                             :Play()
                         TweenService:Create(Button.ElementIndicator, TweenInfo.new(0.6, Enum.EasingStyle.Quint),
                             { TextTransparency = 0.9 }):Play()
@@ -4194,6 +4199,1012 @@ function RayfieldLibrary:CreateWindow(Settings)
                 end
             end
             return SliderSettings
+        end
+
+        -- Priority List
+        function Tab:CreatePriority(PrioritySettings)
+            PrioritySettings.Locked = false
+            if Settings.ConfigurationSaving and Settings.ConfigurationSaving.Enabled and not PrioritySettings.Flag then
+                PrioritySettings.Flag = PrioritySettings.Name
+            end
+
+            -- AllowAdd/AllowRemove controls
+            local allowAdd = true
+            local allowRemove = true
+            if PrioritySettings.AllowAddRemove == false then
+                allowAdd = false
+                allowRemove = false
+            end
+            if PrioritySettings.AllowAdd == false then allowAdd = false end
+            if PrioritySettings.AllowRemove == false then allowRemove = false end
+            local valueType = PrioritySettings.ValueType or "text"
+            local valueOptions = PrioritySettings.ValueOptions or {}
+
+            -- Initialize items from settings
+            local currentItems = {}
+            if PrioritySettings.Items then
+                for _, item in ipairs(PrioritySettings.Items) do
+                    table.insert(currentItems, { Name = item.Name, Value = item.Value or "" })
+                end
+            end
+
+            -- Load from saved config if available
+            if Settings.ConfigurationSaving and Settings.ConfigurationSaving.Enabled and PrioritySettings.Flag then
+                local stored = RayfieldLibrary:_ConfigGet(PrioritySettings.Flag)
+                if type(stored) == "table" and #stored > 0 then
+                    currentItems = {}
+                    for _, item in ipairs(stored) do
+                        if type(item) == "table" and item.Name then
+                            table.insert(currentItems, { Name = item.Name, Value = item.Value or "" })
+                        end
+                    end
+                end
+            end
+
+            local isExpanded = false
+            local itemFrames = {} -- Array of {frame = Frame, data = {Name, Value}}
+            local localDebounce = false
+
+            -- ===== MAIN FRAME =====
+            local Priority = Instance.new("Frame")
+            Priority.Name = PrioritySettings.Name or "Priority"
+            Priority.Size = UDim2.new(1, -10, 0, 45)
+            Priority.BackgroundColor3 = SelectedTheme.ElementBackground
+            Priority.BorderSizePixel = 0
+            Priority.ClipsDescendants = true
+            Priority.Visible = true
+
+            local pCorner = Instance.new("UICorner")
+            pCorner.CornerRadius = UDim.new(0, 5)
+            pCorner.Parent = Priority
+
+            -- Named "UIStroke" so section collapse/expand can find it
+            local pStroke = Instance.new("UIStroke")
+            pStroke.Name = "UIStroke"
+            pStroke.Color = SelectedTheme.ElementStroke
+            pStroke.Thickness = 1.2
+            pStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+            pStroke.Parent = Priority
+
+            -- Named "Title" so section collapse/expand can find it
+            local titleLabel = Instance.new("TextLabel")
+            titleLabel.Name = "Title"
+            titleLabel.Text = PrioritySettings.Name
+            titleLabel.Font = Enum.Font.GothamBold
+            titleLabel.TextSize = 13
+            titleLabel.TextColor3 = SelectedTheme.TextColor
+            titleLabel.TextXAlignment = Enum.TextXAlignment.Left
+            titleLabel.BackgroundTransparency = 1
+            titleLabel.Position = UDim2.new(0, 12, 0, 0)
+            titleLabel.Size = UDim2.new(1, -80, 0, 45)
+            titleLabel.Parent = Priority
+
+            -- Optional icon
+            if PrioritySettings.Icon then
+                local pIcon = Instance.new("ImageLabel")
+                pIcon.Name = "Icon"
+                pIcon.BackgroundTransparency = 1
+                pIcon.Position = UDim2.new(0, 12, 0, 12)
+                pIcon.Size = UDim2.new(0, 20, 0, 20)
+                pIcon.ImageColor3 = SelectedTheme.TextColor
+                pIcon.Parent = Priority
+                RayfieldLibrary:_ApplyIcon(pIcon, PrioritySettings.Icon)
+                titleLabel.Position = UDim2.new(0, 40, 0, 0)
+            end
+
+            -- Item count
+            local countLabel = Instance.new("TextLabel")
+            countLabel.Name = "Count"
+            countLabel.Text = #currentItems .. " items"
+            countLabel.Font = Enum.Font.Gotham
+            countLabel.TextSize = 11
+            countLabel.TextColor3 = Color3.fromRGB(150, 150, 150)
+            countLabel.TextXAlignment = Enum.TextXAlignment.Right
+            countLabel.BackgroundTransparency = 1
+            countLabel.Position = UDim2.new(1, -65, 0, 0)
+            countLabel.Size = UDim2.new(0, 45, 0, 45)
+            countLabel.Parent = Priority
+
+            -- Toggle chevron (text-based for maximum compatibility)
+            local toggleArrow = Instance.new("TextLabel")
+            toggleArrow.Name = "Toggle"
+            toggleArrow.Text = utf8.char(9660) -- down arrow
+            toggleArrow.Font = Enum.Font.GothamBold
+            toggleArrow.TextSize = 10
+            toggleArrow.TextColor3 = Color3.fromRGB(150, 150, 150)
+            toggleArrow.BackgroundTransparency = 1
+            toggleArrow.Position = UDim2.new(1, -20, 0, 0)
+            toggleArrow.Size = UDim2.new(0, 14, 0, 45)
+            toggleArrow.Rotation = 180
+            toggleArrow.Parent = Priority
+
+            -- Transparent click area for expand/collapse
+            local interact = Instance.new("TextButton")
+            interact.Name = "Interact"
+            interact.Text = ""
+            interact.BackgroundTransparency = 1
+            interact.Size = UDim2.new(1, 0, 0, 45)
+            interact.ZIndex = 10
+            interact.Parent = Priority
+
+            -- ===== CONTAINER (holds search, item list, add row) =====
+            local container = Instance.new("Frame")
+            container.Name = "Container"
+            container.BackgroundTransparency = 1
+            container.BorderSizePixel = 0
+            container.Position = UDim2.new(0, 5, 0, 48)
+            container.Size = UDim2.new(1, -10, 0, 600)
+            container.Parent = Priority
+
+            -- === SEARCH BAR ===
+            local searchRow = Instance.new("Frame")
+            searchRow.Name = "SearchRow"
+            searchRow.Size = UDim2.new(1, 0, 0, 28)
+            searchRow.Position = UDim2.new(0, 0, 0, 0)
+            searchRow.BackgroundColor3 = SelectedTheme.InputBackground
+            searchRow.BorderSizePixel = 0
+            searchRow.Parent = container
+
+            Instance.new("UICorner", searchRow).CornerRadius = UDim.new(0, 4)
+
+            local srStroke = Instance.new("UIStroke")
+            srStroke.Color = SelectedTheme.InputStroke
+            srStroke.Thickness = 1
+            srStroke.Parent = searchRow
+
+            local searchInput = Instance.new("TextBox")
+            searchInput.Name = "SearchInput"
+            searchInput.PlaceholderText = "Search items..."
+            searchInput.PlaceholderColor3 = SelectedTheme.PlaceholderColor
+            searchInput.Text = ""
+            searchInput.Font = Enum.Font.Gotham
+            searchInput.TextSize = 12
+            searchInput.TextColor3 = SelectedTheme.TextColor
+            searchInput.TextXAlignment = Enum.TextXAlignment.Left
+            searchInput.BackgroundTransparency = 1
+            searchInput.Position = UDim2.new(0, 8, 0, 0)
+            searchInput.Size = UDim2.new(1, -16, 1, 0)
+            searchInput.ClearTextOnFocus = false
+            searchInput.Parent = searchRow
+
+            -- === SCROLLABLE ITEM LIST ===
+            local itemList = Instance.new("ScrollingFrame")
+            itemList.Name = "ItemList"
+            itemList.Position = UDim2.new(0, 0, 0, 32)
+            itemList.Size = UDim2.new(1, 0, 0, 70)
+            itemList.BackgroundTransparency = 1
+            itemList.BorderSizePixel = 0
+            itemList.ScrollBarThickness = 3
+            itemList.ScrollBarImageTransparency = 0.3
+            itemList.AutomaticCanvasSize = Enum.AutomaticSize.Y
+            itemList.CanvasSize = UDim2.new(0, 0, 0, 0)
+            itemList.Parent = container
+
+            local ilLayout = Instance.new("UIListLayout")
+            ilLayout.SortOrder = Enum.SortOrder.LayoutOrder
+            ilLayout.Padding = UDim.new(0, 3)
+            ilLayout.Parent = itemList
+
+            local ilPadding = Instance.new("UIPadding")
+            ilPadding.PaddingTop = UDim.new(0, 2)
+            ilPadding.PaddingBottom = UDim.new(0, 2)
+            ilPadding.Parent = itemList
+
+            -- === ADD ROW ===
+            local addRow = Instance.new("Frame")
+            addRow.Name = "AddRow"
+            addRow.Position = UDim2.new(0, 0, 0, 0)
+            addRow.Size = UDim2.new(1, 0, 0, 28)
+            addRow.BackgroundColor3 = SelectedTheme.InputBackground
+            addRow.BorderSizePixel = 0
+            addRow.Visible = allowAdd
+            addRow.Parent = container
+
+            local arCorner = Instance.new("UICorner")
+            arCorner.CornerRadius = UDim.new(0, 4)
+            arCorner.Parent = addRow
+
+            local arStroke = Instance.new("UIStroke")
+            arStroke.Color = SelectedTheme.InputStroke
+            arStroke.Thickness = 1
+            arStroke.Parent = addRow
+
+            local addNameInput = Instance.new("TextBox")
+            addNameInput.Name = "NameInput"
+            addNameInput.PlaceholderText = PrioritySettings.Placeholder or "Item name..."
+            addNameInput.PlaceholderColor3 = SelectedTheme.PlaceholderColor
+            addNameInput.Text = ""
+            addNameInput.Font = Enum.Font.Gotham
+            addNameInput.TextSize = 11
+            addNameInput.TextColor3 = SelectedTheme.TextColor
+            addNameInput.TextXAlignment = Enum.TextXAlignment.Left
+            addNameInput.BackgroundTransparency = 1
+            addNameInput.Position = UDim2.new(0, 8, 0, 0)
+            addNameInput.Size = UDim2.new(0.45, -12, 1, 0)
+            addNameInput.ClearTextOnFocus = false
+            addNameInput.Parent = addRow
+
+            local addSep = Instance.new("Frame")
+            addSep.Size = UDim2.new(0, 1, 0, 18)
+            addSep.Position = UDim2.new(0.45, 0, 0, 5)
+            addSep.BackgroundColor3 = SelectedTheme.InputStroke
+            addSep.BorderSizePixel = 0
+            addSep.Parent = addRow
+
+            local addValueInput = Instance.new("TextBox")
+            addValueInput.Name = "ValueInput"
+            addValueInput.PlaceholderText = PrioritySettings.ValuePlaceholder or "Value..."
+            addValueInput.PlaceholderColor3 = SelectedTheme.PlaceholderColor
+            addValueInput.Text = ""
+            addValueInput.Font = Enum.Font.Gotham
+            addValueInput.TextSize = 11
+            addValueInput.TextColor3 = SelectedTheme.TextColor
+            addValueInput.TextXAlignment = Enum.TextXAlignment.Left
+            addValueInput.BackgroundTransparency = 1
+            addValueInput.Position = UDim2.new(0.45, 6, 0, 0)
+            addValueInput.Size = UDim2.new(0.4, -6, 1, 0)
+            addValueInput.ClearTextOnFocus = false
+            addValueInput.Parent = addRow
+
+            local addBtn = Instance.new("TextButton")
+            addBtn.Name = "AddButton"
+            addBtn.Text = "+"
+            addBtn.Font = Enum.Font.GothamBold
+            addBtn.TextSize = 16
+            addBtn.TextColor3 = Color3.fromRGB(100, 200, 100)
+            addBtn.BackgroundColor3 = Color3.fromRGB(35, 55, 35)
+            addBtn.BorderSizePixel = 0
+            addBtn.Position = UDim2.new(1, -26, 0, 2)
+            addBtn.Size = UDim2.new(0, 24, 0, 24)
+            addBtn.ZIndex = 5
+            addBtn.Parent = addRow
+
+            Instance.new("UICorner", addBtn).CornerRadius = UDim.new(0, 4)
+
+            -- Parent element to tab/section
+            Tab.Elements[PrioritySettings.Name] = {
+                type = 'priority',
+                section = PrioritySettings.SectionParent,
+                element = Priority
+            }
+            if PrioritySettings.SectionParent and PrioritySettings.SectionParent.Holder then
+                Priority.Parent = PrioritySettings.SectionParent.Holder
+            else
+                Priority.Parent = TabPage
+            end
+
+            -- ===== INTERNAL HELPERS =====
+            local function updateCount()
+                countLabel.Text = #itemFrames .. " items"
+            end
+
+            local function getOrderedItems()
+                local sorted = {}
+                for _, entry in ipairs(itemFrames) do
+                    table.insert(sorted, entry)
+                end
+                table.sort(sorted, function(a, b)
+                    return a.frame.LayoutOrder < b.frame.LayoutOrder
+                end)
+                local result = {}
+                for _, entry in ipairs(sorted) do
+                    table.insert(result, { Name = entry.data.Name, Value = entry.data.Value })
+                end
+                return result
+            end
+
+            local function saveItems()
+                currentItems = getOrderedItems()
+                updateCount()
+                if Settings.ConfigurationSaving and Settings.ConfigurationSaving.Enabled and PrioritySettings.Flag then
+                    RayfieldLibrary:_ConfigSet(PrioritySettings.Flag, currentItems)
+                end
+                if PrioritySettings.Callback then
+                    pcall(PrioritySettings.Callback, currentItems)
+                end
+            end
+
+            local function updateOrderLabels()
+                local sorted = {}
+                for _, entry in ipairs(itemFrames) do
+                    table.insert(sorted, entry)
+                end
+                table.sort(sorted, function(a, b)
+                    return a.frame.LayoutOrder < b.frame.LayoutOrder
+                end)
+                for i, entry in ipairs(sorted) do
+                    local lbl = entry.frame:FindFirstChild("OrderLabel")
+                    if lbl then
+                        lbl.Text = "#" .. i
+                    end
+                end
+            end
+
+            local function reorderItemTo(targetEntry, targetOrder)
+                local currentOrder = targetEntry.frame.LayoutOrder
+                if targetOrder == currentOrder then return end
+                if targetOrder > currentOrder then
+                    for _, e in ipairs(itemFrames) do
+                        if e ~= targetEntry and e.frame.LayoutOrder > currentOrder and e.frame.LayoutOrder <= targetOrder then
+                            e.frame.LayoutOrder = e.frame.LayoutOrder - 1
+                        end
+                    end
+                else
+                    for _, e in ipairs(itemFrames) do
+                        if e ~= targetEntry and e.frame.LayoutOrder >= targetOrder and e.frame.LayoutOrder < currentOrder then
+                            e.frame.LayoutOrder = e.frame.LayoutOrder + 1
+                        end
+                    end
+                end
+                targetEntry.frame.LayoutOrder = targetOrder
+                updateOrderLabels()
+            end
+
+            local function calculateExpandedHeight()
+                local listHeight = math.clamp(#itemFrames * 35, 70, 200)
+                local addRowHeight = allowAdd and 36 or 4
+                return 45 + 4 + 28 + 4 + listHeight + addRowHeight + 8
+            end
+
+            local function updateLayout()
+                local listHeight = math.clamp(#itemFrames * 35, 70, 200)
+                itemList.Size = UDim2.new(1, 0, 0, listHeight)
+                addRow.Position = UDim2.new(0, 0, 0, 32 + listHeight + 4)
+            end
+
+            local function updateExpandedSize()
+                if not isExpanded then return end
+                updateLayout()
+                local h = calculateExpandedHeight()
+                TweenService:Create(Priority, TweenInfo.new(0.3, Enum.EasingStyle.Quint),
+                    { Size = UDim2.new(1, -10, 0, h) }):Play()
+            end
+
+            -- ===== CREATE SINGLE ITEM ROW =====
+            local function createItemFrame(itemData, layoutOrder)
+                local itemFrame = Instance.new("Frame")
+                itemFrame.Name = "Item_" .. tostring(itemData.Name)
+                itemFrame.Size = UDim2.new(1, -2, 0, 32)
+                itemFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+                itemFrame.BorderSizePixel = 0
+                itemFrame.LayoutOrder = layoutOrder
+                itemFrame.Parent = itemList
+
+                local iCorner = Instance.new("UICorner")
+                iCorner.CornerRadius = UDim.new(0, 4)
+                iCorner.Parent = itemFrame
+
+                local iStroke = Instance.new("UIStroke")
+                iStroke.Color = Color3.fromRGB(45, 45, 45)
+                iStroke.Parent = itemFrame
+
+                -- Drag handle (text-based ":::")
+                local dragHandle = Instance.new("TextButton")
+                dragHandle.Name = "DragHandle"
+                dragHandle.Text = ":::"
+                dragHandle.Font = Enum.Font.GothamBold
+                dragHandle.TextSize = 14
+                dragHandle.TextColor3 = Color3.fromRGB(90, 90, 90)
+                dragHandle.BackgroundTransparency = 1
+                dragHandle.Position = UDim2.new(0, 0, 0, 0)
+                dragHandle.Size = UDim2.new(0, 24, 1, 0)
+                dragHandle.ZIndex = 6
+                dragHandle.Parent = itemFrame
+
+                -- Priority order label
+                local orderLabel = Instance.new("TextLabel")
+                orderLabel.Name = "OrderLabel"
+                orderLabel.Text = "#" .. layoutOrder
+                orderLabel.Font = Enum.Font.GothamBold
+                orderLabel.TextSize = 10
+                orderLabel.TextColor3 = Color3.fromRGB(80, 120, 180)
+                orderLabel.BackgroundTransparency = 1
+                orderLabel.Position = UDim2.new(0, 22, 0, 0)
+                orderLabel.Size = UDim2.new(0, 24, 1, 0)
+                orderLabel.Parent = itemFrame
+
+                -- Item name
+                local nameLabel = Instance.new("TextLabel")
+                nameLabel.Name = "NameLabel"
+                nameLabel.Text = itemData.Name
+                nameLabel.Font = Enum.Font.GothamMedium
+                nameLabel.TextSize = 12
+                nameLabel.TextColor3 = SelectedTheme.TextColor
+                nameLabel.TextXAlignment = Enum.TextXAlignment.Left
+                nameLabel.TextTruncate = Enum.TextTruncate.AtEnd
+                nameLabel.BackgroundTransparency = 1
+                nameLabel.Position = UDim2.new(0, 48, 0, 0)
+                nameLabel.Size = UDim2.new(0.35, -48, 1, 0)
+                nameLabel.Parent = itemFrame
+
+                -- Value frame
+                local valFrame = Instance.new("Frame")
+                valFrame.Name = "InputFrame"
+                valFrame.AnchorPoint = Vector2.new(1, 0.5)
+                valFrame.BackgroundColor3 = Color3.fromRGB(22, 22, 22)
+                valFrame.BorderSizePixel = 0
+                valFrame.Position = UDim2.new(1, allowRemove and -34 or -6, 0.5, 0)
+                valFrame.Size = UDim2.new(0, allowRemove and 130 or 155, 0, 24)
+                valFrame.ZIndex = 5
+                valFrame.Parent = itemFrame
+
+                Instance.new("UICorner", valFrame).CornerRadius = UDim.new(0, 4)
+
+                local vfStroke = Instance.new("UIStroke")
+                vfStroke.Color = Color3.fromRGB(50, 50, 50)
+                vfStroke.Parent = valFrame
+
+                local entry = { frame = itemFrame, data = itemData }
+                table.insert(itemFrames, entry)
+
+                if valueType == "dropdown" then
+                    -- Display-only text
+                    local valueDisplay = Instance.new("TextLabel")
+                    valueDisplay.Name = "InputBox"
+                    valueDisplay.AnchorPoint = Vector2.new(0, 0.5)
+                    valueDisplay.BackgroundTransparency = 1
+                    valueDisplay.Position = UDim2.new(0, 6, 0.5, 0)
+                    valueDisplay.Size = UDim2.new(1, -22, 0, 14)
+                    valueDisplay.ZIndex = 6
+                    valueDisplay.Font = Enum.Font.GothamMedium
+                    valueDisplay.Text = tostring(itemData.Value or "")
+                    valueDisplay.TextColor3 = SelectedTheme.TextColor
+                    valueDisplay.TextSize = 11
+                    valueDisplay.TextXAlignment = Enum.TextXAlignment.Left
+                    valueDisplay.TextTruncate = Enum.TextTruncate.AtEnd
+                    valueDisplay.Parent = valFrame
+
+                    -- Chevron indicator
+                    local chevron = Instance.new("TextLabel")
+                    chevron.Name = "Chevron"
+                    chevron.AnchorPoint = Vector2.new(1, 0.5)
+                    chevron.Position = UDim2.new(1, -4, 0.5, 0)
+                    chevron.Size = UDim2.new(0, 12, 0, 12)
+                    chevron.BackgroundTransparency = 1
+                    chevron.Text = utf8.char(9660)
+                    chevron.Font = Enum.Font.GothamBold
+                    chevron.TextSize = 8
+                    chevron.TextColor3 = Color3.fromRGB(150, 150, 150)
+                    chevron.ZIndex = 6
+                    chevron.Parent = valFrame
+
+                    -- Clickable overlay
+                    local inputClickArea = Instance.new("TextButton")
+                    inputClickArea.Name = "InputClickArea"
+                    inputClickArea.BackgroundTransparency = 1
+                    inputClickArea.Size = UDim2.new(1, 0, 1, 0)
+                    inputClickArea.ZIndex = 7
+                    inputClickArea.Text = ""
+                    inputClickArea.Parent = valFrame
+
+                    inputClickArea.MouseButton1Click:Connect(function()
+                        if PrioritySettings.Locked then return end
+                        local existingPopup = Rayfield:FindFirstChild("_PriorityValuePopup")
+                        if existingPopup then existingPopup:Destroy() end
+
+                        local popup = Instance.new("Frame")
+                        popup.Name = "_PriorityValuePopup"
+                        popup.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
+                        popup.BorderSizePixel = 0
+                        popup.ZIndex = 100
+                        popup.ClipsDescendants = true
+                        popup.Parent = Rayfield
+
+                        Instance.new("UICorner", popup).CornerRadius = UDim.new(0, 5)
+                        local popupStroke = Instance.new("UIStroke")
+                        popupStroke.Color = Color3.fromRGB(60, 60, 60)
+                        popupStroke.Parent = popup
+
+                        local absPos = valFrame.AbsolutePosition
+                        local absSize = valFrame.AbsoluteSize
+                        local rayfieldPos = Rayfield.AbsolutePosition
+                        local popupHeight = math.min(#valueOptions * 27 + 4, 160)
+                        popup.Position = UDim2.new(0, absPos.X - rayfieldPos.X, 0,
+                            absPos.Y - rayfieldPos.Y + absSize.Y + 2)
+                        popup.Size = UDim2.new(0, absSize.X, 0, popupHeight)
+
+                        local popupScroll = Instance.new("ScrollingFrame")
+                        popupScroll.BackgroundTransparency = 1
+                        popupScroll.Size = UDim2.new(1, 0, 1, 0)
+                        popupScroll.ScrollBarThickness = 2
+                        popupScroll.AutomaticCanvasSize = Enum.AutomaticSize.Y
+                        popupScroll.ZIndex = 101
+                        popupScroll.BorderSizePixel = 0
+                        popupScroll.Parent = popup
+
+                        local popupLayout = Instance.new("UIListLayout")
+                        popupLayout.SortOrder = Enum.SortOrder.LayoutOrder
+                        popupLayout.Padding = UDim.new(0, 1)
+                        popupLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center
+                        popupLayout.Parent = popupScroll
+
+                        local popupPad = Instance.new("UIPadding")
+                        popupPad.PaddingTop = UDim.new(0, 2)
+                        popupPad.PaddingBottom = UDim.new(0, 2)
+                        popupPad.Parent = popupScroll
+
+                        for optIdx, opt in ipairs(valueOptions) do
+                            local optBtn = Instance.new("TextButton")
+                            optBtn.Name = tostring(opt)
+                            optBtn.Text = tostring(opt)
+                            optBtn.Font = Enum.Font.GothamMedium
+                            optBtn.TextSize = 12
+                            optBtn.TextColor3 = Color3.fromRGB(220, 220, 220)
+                            optBtn.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+                            optBtn.Size = UDim2.new(0.96, 0, 0, 25)
+                            optBtn.BorderSizePixel = 0
+                            optBtn.ZIndex = 102
+                            optBtn.LayoutOrder = optIdx
+                            optBtn.Parent = popupScroll
+
+                            Instance.new("UICorner", optBtn).CornerRadius = UDim.new(0, 4)
+
+                            if tostring(opt) == tostring(itemData.Value) then
+                                optBtn.BackgroundColor3 = Color3.fromRGB(43, 105, 159)
+                            end
+
+                            optBtn.MouseEnter:Connect(function()
+                                TweenService:Create(optBtn, TweenInfo.new(0.1, Enum.EasingStyle.Quint),
+                                    { BackgroundColor3 = Color3.fromRGB(43, 105, 159) }):Play()
+                            end)
+                            optBtn.MouseLeave:Connect(function()
+                                if tostring(opt) == tostring(itemData.Value) then
+                                    TweenService:Create(optBtn, TweenInfo.new(0.1, Enum.EasingStyle.Quint),
+                                        { BackgroundColor3 = Color3.fromRGB(43, 105, 159) }):Play()
+                                else
+                                    TweenService:Create(optBtn, TweenInfo.new(0.1, Enum.EasingStyle.Quint),
+                                        { BackgroundColor3 = Color3.fromRGB(30, 30, 30) }):Play()
+                                end
+                            end)
+                            optBtn.MouseButton1Click:Connect(function()
+                                itemData.Value = tostring(opt)
+                                valueDisplay.Text = tostring(opt)
+                                popup:Destroy()
+                                saveItems()
+                            end)
+                        end
+
+                        task.defer(function()
+                            local closeConn
+                            closeConn = UserInputService.InputBegan:Connect(function(input)
+                                if input.UserInputType == Enum.UserInputType.MouseButton1
+                                    or input.UserInputType == Enum.UserInputType.Touch then
+                                    local mousePos = UserInputService:GetMouseLocation()
+                                    local pAbs = popup.AbsolutePosition
+                                    local pSize = popup.AbsoluteSize
+                                    if mousePos.X < pAbs.X or mousePos.X > pAbs.X + pSize.X
+                                        or mousePos.Y < pAbs.Y or mousePos.Y > pAbs.Y + pSize.Y then
+                                        popup:Destroy()
+                                        if closeConn then closeConn:Disconnect() end
+                                    end
+                                end
+                            end)
+                            popup.AncestryChanged:Connect(function()
+                                if not popup.Parent then
+                                    if closeConn then closeConn:Disconnect() end
+                                end
+                            end)
+                        end)
+                    end)
+                else
+                    -- Text input mode
+                    local valueInput = Instance.new("TextBox")
+                    valueInput.Name = "InputBox"
+                    valueInput.AnchorPoint = Vector2.new(0, 0.5)
+                    valueInput.BackgroundTransparency = 1
+                    valueInput.Position = UDim2.new(0, 6, 0.5, 0)
+                    valueInput.Size = UDim2.new(1, -12, 0, 14)
+                    valueInput.ZIndex = 6
+                    valueInput.ClearTextOnFocus = false
+                    valueInput.Font = Enum.Font.GothamMedium
+                    valueInput.PlaceholderColor3 = SelectedTheme.PlaceholderColor
+                    valueInput.PlaceholderText = PrioritySettings.ValuePlaceholder or "Value"
+                    valueInput.Text = tostring(itemData.Value or "")
+                    valueInput.TextColor3 = SelectedTheme.TextColor
+                    valueInput.TextSize = 11
+                    valueInput.TextXAlignment = Enum.TextXAlignment.Left
+                    valueInput.Parent = valFrame
+
+                    valueInput.FocusLost:Connect(function()
+                        itemData.Value = valueInput.Text
+                        saveItems()
+                    end)
+                end
+
+                -- Delete button (only when AllowRemove is true)
+                if allowRemove then
+                    local delBtn = Instance.new("TextButton")
+                    delBtn.Name = "DeleteButton"
+                    delBtn.Text = "X"
+                    delBtn.Font = Enum.Font.GothamBold
+                    delBtn.TextSize = 11
+                    delBtn.TextColor3 = Color3.fromRGB(200, 80, 80)
+                    delBtn.BackgroundColor3 = Color3.fromRGB(55, 28, 28)
+                    delBtn.BorderSizePixel = 0
+                    delBtn.AnchorPoint = Vector2.new(1, 0.5)
+                    delBtn.Position = UDim2.new(1, -4, 0.5, 0)
+                    delBtn.Size = UDim2.new(0, 26, 0, 24)
+                    delBtn.ZIndex = 5
+                    delBtn.Parent = itemFrame
+
+                    Instance.new("UICorner", delBtn).CornerRadius = UDim.new(0, 4)
+
+                    delBtn.MouseButton1Click:Connect(function()
+                        if PrioritySettings.Locked then return end
+                        for i, e in ipairs(itemFrames) do
+                            if e == entry then
+                                table.remove(itemFrames, i)
+                                break
+                            end
+                        end
+                        itemFrame:Destroy()
+                        local sorted = {}
+                        for _, e in ipairs(itemFrames) do table.insert(sorted, e) end
+                        table.sort(sorted, function(a, b) return a.frame.LayoutOrder < b.frame.LayoutOrder end)
+                        for i, e in ipairs(sorted) do e.frame.LayoutOrder = i end
+                        updateOrderLabels()
+                        updateExpandedSize()
+                        saveItems()
+                    end)
+
+                    delBtn.MouseEnter:Connect(function()
+                        TweenService:Create(delBtn, TweenInfo.new(0.15, Enum.EasingStyle.Quint),
+                            { BackgroundColor3 = Color3.fromRGB(75, 30, 30) }):Play()
+                    end)
+                    delBtn.MouseLeave:Connect(function()
+                        TweenService:Create(delBtn, TweenInfo.new(0.15, Enum.EasingStyle.Quint),
+                            { BackgroundColor3 = Color3.fromRGB(55, 28, 28) }):Play()
+                    end)
+                end
+
+                -- ===== DRAG AND DROP REORDERING =====
+                local isDragging = false
+                local dragConn, dragEndConn
+
+                dragHandle.MouseButton1Down:Connect(function()
+                    if PrioritySettings.Locked then return end
+                    isDragging = true
+                    local startY = UserInputService:GetMouseLocation().Y
+                    local startOrder = itemFrame.LayoutOrder
+
+                    -- Visual: highlight the dragged row
+                    itemFrame.BackgroundColor3 = Color3.fromRGB(40, 60, 90)
+                    iStroke.Color = SelectedTheme.SliderBackground
+
+                    if dragConn then dragConn:Disconnect() end
+                    if dragEndConn then dragEndConn:Disconnect() end
+
+                    dragConn = UserInputService.InputChanged:Connect(function(input)
+                        if not isDragging then return end
+                        if input.UserInputType ~= Enum.UserInputType.MouseMovement
+                            and input.UserInputType ~= Enum.UserInputType.Touch then
+                            return
+                        end
+                        local currentY = UserInputService:GetMouseLocation().Y
+                        local deltaY = currentY - startY
+                        local step = 35
+                        local moveSteps = math.floor(deltaY / step + 0.5)
+                        local newOrder = math.clamp(startOrder + moveSteps, 1, #itemFrames)
+                        if newOrder ~= itemFrame.LayoutOrder then
+                            reorderItemTo(entry, newOrder)
+                        end
+                    end)
+
+                    dragEndConn = UserInputService.InputEnded:Connect(function(endedInput)
+                        if endedInput.UserInputType == Enum.UserInputType.MouseButton1
+                            or endedInput.UserInputType == Enum.UserInputType.Touch then
+                            isDragging = false
+                            itemFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+                            iStroke.Color = Color3.fromRGB(45, 45, 45)
+                            if dragConn then
+                                dragConn:Disconnect()
+                                dragConn = nil
+                            end
+                            if dragEndConn then
+                                dragEndConn:Disconnect()
+                                dragEndConn = nil
+                            end
+                            saveItems()
+                        end
+                    end)
+                end)
+
+                -- Touch support for the drag handle
+                dragHandle.InputBegan:Connect(function(input)
+                    if input.UserInputType == Enum.UserInputType.Touch then
+                        if PrioritySettings.Locked then return end
+                        isDragging = true
+                        local startY = input.Position.Y
+                        local startOrder = itemFrame.LayoutOrder
+
+                        itemFrame.BackgroundColor3 = Color3.fromRGB(40, 60, 90)
+                        iStroke.Color = SelectedTheme.SliderBackground
+
+                        if dragConn then dragConn:Disconnect() end
+                        if dragEndConn then dragEndConn:Disconnect() end
+
+                        dragConn = UserInputService.InputChanged:Connect(function(changedInput)
+                            if not isDragging then return end
+                            if changedInput.UserInputType ~= Enum.UserInputType.Touch then return end
+                            local deltaY = changedInput.Position.Y - startY
+                            local step = 35
+                            local moveSteps = math.floor(deltaY / step + 0.5)
+                            local newOrder = math.clamp(startOrder + moveSteps, 1, #itemFrames)
+                            if newOrder ~= itemFrame.LayoutOrder then
+                                reorderItemTo(entry, newOrder)
+                            end
+                        end)
+
+                        dragEndConn = UserInputService.InputEnded:Connect(function(endedInput)
+                            if endedInput.UserInputType == Enum.UserInputType.Touch then
+                                isDragging = false
+                                itemFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+                                iStroke.Color = Color3.fromRGB(45, 45, 45)
+                                if dragConn then
+                                    dragConn:Disconnect()
+                                    dragConn = nil
+                                end
+                                if dragEndConn then
+                                    dragEndConn:Disconnect()
+                                    dragEndConn = nil
+                                end
+                                saveItems()
+                            end
+                        end)
+                    end
+                end)
+
+                -- Row hover
+                itemFrame.MouseEnter:Connect(function()
+                    if not isDragging then
+                        TweenService:Create(itemFrame, TweenInfo.new(0.15, Enum.EasingStyle.Quint),
+                            { BackgroundColor3 = Color3.fromRGB(38, 38, 38) }):Play()
+                    end
+                end)
+                itemFrame.MouseLeave:Connect(function()
+                    if not isDragging then
+                        TweenService:Create(itemFrame, TweenInfo.new(0.15, Enum.EasingStyle.Quint),
+                            { BackgroundColor3 = Color3.fromRGB(30, 30, 30) }):Play()
+                    end
+                end)
+
+                return entry
+            end
+
+            -- Build initial items
+            for i, item in ipairs(currentItems) do
+                createItemFrame(item, i)
+            end
+            updateOrderLabels()
+            updateCount()
+            updateLayout()
+
+            -- ===== EXPAND / COLLAPSE =====
+            interact.MouseButton1Click:Connect(function()
+                TweenService:Create(Priority, TweenInfo.new(0.4, Enum.EasingStyle.Quint),
+                    { BackgroundColor3 = SelectedTheme.ElementBackgroundHover }):Play()
+                TweenService:Create(pStroke, TweenInfo.new(0.4, Enum.EasingStyle.Quint), { Transparency = 1 }):Play()
+                wait(0.1)
+                TweenService:Create(Priority, TweenInfo.new(0.4, Enum.EasingStyle.Quint),
+                    { BackgroundColor3 = SelectedTheme.ElementBackground }):Play()
+                TweenService:Create(pStroke, TweenInfo.new(0.4, Enum.EasingStyle.Quint), { Transparency = 0 }):Play()
+
+                if localDebounce then return end
+
+                if isExpanded then
+                    -- Collapse
+                    localDebounce = true
+                    isExpanded = false
+                    TweenService:Create(Priority, TweenInfo.new(0.5, Enum.EasingStyle.Quint),
+                        { Size = UDim2.new(1, -10, 0, 45) }):Play()
+                    TweenService:Create(toggleArrow, TweenInfo.new(0.5, Enum.EasingStyle.Quint),
+                        { Rotation = 180 }):Play()
+                    wait(0.4)
+                    localDebounce = false
+                else
+                    -- Expand
+                    localDebounce = true
+                    isExpanded = true
+                    updateLayout()
+                    local h = calculateExpandedHeight()
+                    TweenService:Create(Priority, TweenInfo.new(0.5, Enum.EasingStyle.Quint),
+                        { Size = UDim2.new(1, -10, 0, h) }):Play()
+                    TweenService:Create(toggleArrow, TweenInfo.new(0.5, Enum.EasingStyle.Quint),
+                        { Rotation = 0 }):Play()
+                    wait(0.4)
+                    localDebounce = false
+                end
+            end)
+
+            -- ===== SEARCH FILTERING =====
+            searchInput:GetPropertyChangedSignal('Text'):Connect(function()
+                local query = string.upper(searchInput.Text)
+                for _, entry in ipairs(itemFrames) do
+                    if query == "" or query == " " or string.find(string.upper(entry.data.Name), query) ~= nil then
+                        entry.frame.Visible = true
+                    else
+                        entry.frame.Visible = false
+                    end
+                end
+            end)
+
+            -- ===== ADD NEW ITEM =====
+            if allowAdd then
+                addBtn.MouseButton1Click:Connect(function()
+                    if PrioritySettings.Locked then return end
+                    local name = addNameInput.Text
+                    local value = addValueInput.Text
+                    if name == nil or name == "" then return end
+                    for _, entry in ipairs(itemFrames) do
+                        if entry.data.Name == name then return end
+                    end
+                    local newItem = { Name = name, Value = value }
+                    createItemFrame(newItem, #itemFrames + 1)
+                    updateOrderLabels()
+                    addNameInput.Text = ""
+                    addValueInput.Text = ""
+                    updateExpandedSize()
+                    saveItems()
+                end)
+
+                addBtn.MouseEnter:Connect(function()
+                    TweenService:Create(addBtn, TweenInfo.new(0.15, Enum.EasingStyle.Quint),
+                        { BackgroundColor3 = Color3.fromRGB(45, 75, 45) }):Play()
+                end)
+                addBtn.MouseLeave:Connect(function()
+                    TweenService:Create(addBtn, TweenInfo.new(0.15, Enum.EasingStyle.Quint),
+                        { BackgroundColor3 = Color3.fromRGB(35, 55, 35) }):Play()
+                end)
+            end
+
+            -- Main frame hover
+            Priority.MouseEnter:Connect(function()
+                if not isExpanded then
+                    TweenService:Create(Priority, TweenInfo.new(0.6, Enum.EasingStyle.Quint),
+                        { BackgroundColor3 = SelectedTheme.ElementBackgroundHover }):Play()
+                end
+            end)
+            Priority.MouseLeave:Connect(function()
+                TweenService:Create(Priority, TweenInfo.new(0.6, Enum.EasingStyle.Quint),
+                    { BackgroundColor3 = SelectedTheme.ElementBackground }):Play()
+            end)
+
+            -- ===== INTRO ANIMATIONS =====
+            Priority.BackgroundTransparency = 1
+            pStroke.Transparency = 1
+            titleLabel.TextTransparency = 1
+
+            TweenService:Create(Priority, TweenInfo.new(0.7, Enum.EasingStyle.Quint),
+                { BackgroundTransparency = 0 }):Play()
+            TweenService:Create(pStroke, TweenInfo.new(0.7, Enum.EasingStyle.Quint),
+                { Transparency = 0 }):Play()
+            TweenService:Create(titleLabel, TweenInfo.new(0.7, Enum.EasingStyle.Quint),
+                { TextTransparency = 0 }):Play()
+
+            -- ===== PUBLIC API =====
+
+            -- Replace all items
+            function PrioritySettings:Set(newItems)
+                for _, entry in ipairs(itemFrames) do
+                    entry.frame:Destroy()
+                end
+                itemFrames = {}
+                currentItems = {}
+                for i, item in ipairs(newItems) do
+                    if type(item) == "table" and item.Name then
+                        table.insert(currentItems, { Name = item.Name, Value = item.Value or "" })
+                        createItemFrame(currentItems[#currentItems], i)
+                    end
+                end
+                updateOrderLabels()
+                updateExpandedSize()
+                saveItems()
+            end
+
+            -- Add a single item at the end
+            function PrioritySettings:Add(name, value)
+                if type(name) == "table" then name = name[1] end
+                if type(value) == "table" then value = value[1] end
+                name = tostring(name or "")
+                value = tostring(value or "")
+                if name == "" then return end
+                for _, entry in ipairs(itemFrames) do
+                    if entry.data.Name == name then return end
+                end
+                local newItem = { Name = name, Value = value }
+                createItemFrame(newItem, #itemFrames + 1)
+                updateOrderLabels()
+                updateExpandedSize()
+                saveItems()
+            end
+
+            -- Remove an item by name
+            function PrioritySettings:Remove(name)
+                if type(name) == "table" then name = name[1] end
+                name = tostring(name or "")
+                for i, entry in ipairs(itemFrames) do
+                    if entry.data.Name == name then
+                        entry.frame:Destroy()
+                        table.remove(itemFrames, i)
+                        break
+                    end
+                end
+                local sorted = {}
+                for _, e in ipairs(itemFrames) do table.insert(sorted, e) end
+                table.sort(sorted, function(a, b) return a.frame.LayoutOrder < b.frame.LayoutOrder end)
+                for i, e in ipairs(sorted) do e.frame.LayoutOrder = i end
+                updateOrderLabels()
+                updateExpandedSize()
+                saveItems()
+            end
+
+            -- Get the current ordered items list
+            function PrioritySettings:Get()
+                return getOrderedItems()
+            end
+
+            -- Set the value of a specific item by name
+            function PrioritySettings:SetValue(name, value)
+                if type(name) == "table" then name = name[1] end
+                if type(value) == "table" then value = value[1] end
+                name = tostring(name or "")
+                value = tostring(value or "")
+                for _, entry in ipairs(itemFrames) do
+                    if entry.data.Name == name then
+                        entry.data.Value = value
+                        local inputBox = entry.frame:FindFirstChild("InputFrame")
+                        if inputBox then
+                            local ib = inputBox:FindFirstChild("InputBox")
+                            if ib then
+                                if ib:IsA("TextBox") then
+                                    ib.Text = value
+                                elseif ib:IsA("TextLabel") then
+                                    ib.Text = value
+                                end
+                            end
+                        end
+                        saveItems()
+                        return
+                    end
+                end
+            end
+
+            -- Update the dropdown value options
+            function PrioritySettings:UpdateValueOptions(newOptions)
+                valueOptions = newOptions or {}
+            end
+
+            function PrioritySettings:Destroy()
+                local existingPopup = Rayfield:FindFirstChild("_PriorityValuePopup")
+                if existingPopup then existingPopup:Destroy() end
+                Priority:Destroy()
+            end
+
+            function PrioritySettings:Visible(bool)
+                Priority.Visible = bool
+            end
+
+            function PrioritySettings:Lock(Reason)
+                if PrioritySettings.Locked then return end
+                PrioritySettings.Locked = true
+            end
+
+            function PrioritySettings:Unlock()
+                if not PrioritySettings.Locked then return end
+                PrioritySettings.Locked = false
+            end
+
+            -- Configuration saving
+            if Settings.ConfigurationSaving then
+                if Settings.ConfigurationSaving.Enabled and PrioritySettings.Flag then
+                    RayfieldLibrary.Flags[PrioritySettings.Flag] = PrioritySettings
+                    if RayfieldLibrary:_ConfigGet(PrioritySettings.Flag) == nil then
+                        RayfieldLibrary:_ConfigSet(PrioritySettings.Flag, currentItems)
+                    end
+                end
+            end
+
+            return PrioritySettings
         end
 
         return Tab
