@@ -259,6 +259,1076 @@ end)
 
 local SelectedTheme = RayfieldLibrary.Theme.Default
 
+--//============ INFO TOOLTIP SYSTEM ============//--
+
+-- Shared floating tooltip frame (parented to ScreenGui so it renders above everything)
+local InfoTooltip = Instance.new("Frame")
+InfoTooltip.Name = "InfoTooltip"
+InfoTooltip.Parent = Rayfield
+InfoTooltip.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+InfoTooltip.BorderSizePixel = 0
+InfoTooltip.Size = UDim2.new(0, 200, 0, 0) -- Width fixed, height auto
+InfoTooltip.AutomaticSize = Enum.AutomaticSize.Y
+InfoTooltip.Visible = false
+InfoTooltip.ZIndex = 1000
+InfoTooltip.ClipsDescendants = false
+
+local TooltipCorner = Instance.new("UICorner")
+TooltipCorner.CornerRadius = UDim.new(0, 8)
+TooltipCorner.Parent = InfoTooltip
+
+local TooltipStroke = Instance.new("UIStroke")
+TooltipStroke.Color = Color3.fromRGB(60, 60, 60)
+TooltipStroke.Thickness = 1
+TooltipStroke.Transparency = 0
+TooltipStroke.Parent = InfoTooltip
+
+local TooltipPadding = Instance.new("UIPadding")
+TooltipPadding.PaddingTop = UDim.new(0, 8)
+TooltipPadding.PaddingBottom = UDim.new(0, 8)
+TooltipPadding.PaddingLeft = UDim.new(0, 10)
+TooltipPadding.PaddingRight = UDim.new(0, 10)
+TooltipPadding.Parent = InfoTooltip
+
+local TooltipText = Instance.new("TextLabel")
+TooltipText.Name = "TooltipText"
+TooltipText.Parent = InfoTooltip
+TooltipText.BackgroundTransparency = 1
+TooltipText.Size = UDim2.new(1, 0, 0, 0)
+TooltipText.AutomaticSize = Enum.AutomaticSize.Y
+TooltipText.Font = Enum.Font.GothamMedium
+TooltipText.TextColor3 = Color3.fromRGB(200, 200, 200)
+TooltipText.TextSize = 12
+TooltipText.TextWrapped = true
+TooltipText.TextXAlignment = Enum.TextXAlignment.Left
+TooltipText.TextYAlignment = Enum.TextYAlignment.Top
+TooltipText.Text = ""
+TooltipText.ZIndex = 1001
+TooltipText.RichText = true
+
+-- Small arrow/caret pointing toward the element (optional visual polish)
+local TooltipArrow = Instance.new("Frame")
+TooltipArrow.Name = "Arrow"
+TooltipArrow.Parent = InfoTooltip
+TooltipArrow.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+TooltipArrow.BorderSizePixel = 0
+TooltipArrow.Size = UDim2.new(0, 10, 0, 10)
+TooltipArrow.Rotation = 45
+TooltipArrow.AnchorPoint = Vector2.new(0.5, 0.5)
+TooltipArrow.Position = UDim2.new(0, 0, 0, 0) -- Positioned dynamically
+TooltipArrow.ZIndex = 999
+TooltipArrow.Visible = false                  -- Shown when tooltip is visible
+
+local _activeInfoButton = nil                 -- Track which info button is currently showing tooltip
+
+local function HideInfoTooltip()
+    if InfoTooltip.Visible then
+        TweenService:Create(InfoTooltip, TweenInfo.new(0.15, Enum.EasingStyle.Quint), { BackgroundTransparency = 1 })
+            :Play()
+        TweenService:Create(TooltipText, TweenInfo.new(0.15, Enum.EasingStyle.Quint), { TextTransparency = 1 }):Play()
+        TweenService:Create(TooltipStroke, TweenInfo.new(0.15, Enum.EasingStyle.Quint), { Transparency = 1 }):Play()
+        TweenService:Create(TooltipArrow, TweenInfo.new(0.15, Enum.EasingStyle.Quint), { BackgroundTransparency = 1 })
+            :Play()
+        task.delay(0.15, function()
+            if _activeInfoButton == nil then
+                InfoTooltip.Visible = false
+                TooltipArrow.Visible = false
+            end
+        end)
+    end
+    _activeInfoButton = nil
+end
+
+local function ShowInfoTooltip(anchorButton, infoText)
+    _activeInfoButton = anchorButton
+    TooltipText.Text = infoText
+
+    -- Make visible but transparent first for size calculation
+    InfoTooltip.BackgroundTransparency = 1
+    TooltipText.TextTransparency = 1
+    TooltipStroke.Transparency = 1
+    TooltipArrow.BackgroundTransparency = 1
+    InfoTooltip.Visible = true
+    TooltipArrow.Visible = true
+
+    -- Wait a frame for AutomaticSize to calculate
+    task.wait()
+
+    -- Position tooltip above the info button, centered horizontally
+    local btnPos = anchorButton.AbsolutePosition
+    local btnSize = anchorButton.AbsoluteSize
+    local tooltipSize = InfoTooltip.AbsoluteSize
+    local screenSize = workspace.CurrentCamera.ViewportSize
+
+    -- Default: show above the button
+    local tooltipX = btnPos.X + (btnSize.X / 2) - (tooltipSize.X / 2)
+    local tooltipY = btnPos.Y - tooltipSize.Y - 8
+
+    -- If tooltip would go above the screen, show below instead
+    local showBelow = false
+    if tooltipY < 0 then
+        tooltipY = btnPos.Y + btnSize.Y + 8
+        showBelow = true
+    end
+
+    -- Clamp X to stay on screen
+    if tooltipX < 4 then tooltipX = 4 end
+    if tooltipX + tooltipSize.X > screenSize.X - 4 then
+        tooltipX = screenSize.X - tooltipSize.X - 4
+    end
+
+    InfoTooltip.Position = UDim2.new(0, tooltipX, 0, tooltipY)
+
+    -- Position arrow
+    local arrowX = (btnPos.X + btnSize.X / 2) - tooltipX
+    if showBelow then
+        TooltipArrow.Position = UDim2.new(0, arrowX, 0, -3)
+    else
+        TooltipArrow.Position = UDim2.new(0, arrowX, 1, 3)
+    end
+
+    -- Tween in
+    TweenService:Create(InfoTooltip, TweenInfo.new(0.2, Enum.EasingStyle.Quint), { BackgroundTransparency = 0 }):Play()
+    TweenService:Create(TooltipText, TweenInfo.new(0.2, Enum.EasingStyle.Quint), { TextTransparency = 0 }):Play()
+    TweenService:Create(TooltipStroke, TweenInfo.new(0.2, Enum.EasingStyle.Quint), { Transparency = 0 }):Play()
+    TweenService:Create(TooltipArrow, TweenInfo.new(0.2, Enum.EasingStyle.Quint), { BackgroundTransparency = 0 }):Play()
+end
+
+--- Creates a small ℹ icon button next to an element's Title.
+--- When hovered or clicked, shows a floating tooltip with the info text.
+--- @param parentElement Frame -- The element frame (Button, Toggle, Slider, etc.)
+--- @param infoText string -- The info/description text to display
+--- @param titleObject TextLabel -- The Title TextLabel to position the icon after
+local function CreateInfoButton(parentElement, infoText, titleObject)
+    if not infoText or infoText == "" then return end
+    if not parentElement then return end
+
+    -- Create the info icon as a circle with "i" inside, positioned inline after title text
+    local InfoBtn = Instance.new("TextButton")
+    InfoBtn.Name = "InfoButton"
+    InfoBtn.Parent = titleObject -- Parent directly to the Title label so position is relative to it
+    InfoBtn.Text = ""
+    InfoBtn.AutoButtonColor = false
+    InfoBtn.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
+    InfoBtn.BackgroundTransparency = 0.5
+    InfoBtn.Size = UDim2.new(0, 14, 0, 14)
+    InfoBtn.AnchorPoint = Vector2.new(0, 0.5)
+    InfoBtn.ZIndex = 5
+    InfoBtn.BorderSizePixel = 0
+
+    -- Position right after rendered text, vertically centered within the title label
+    local function updateInfoPosition()
+        if titleObject then
+            local textWidth = titleObject.TextBounds.X
+            InfoBtn.Position = UDim2.new(0, textWidth + 6, 0.5, 0)
+        end
+    end
+    updateInfoPosition()
+    if titleObject then
+        titleObject:GetPropertyChangedSignal("TextBounds"):Connect(updateInfoPosition)
+        titleObject:GetPropertyChangedSignal("Text"):Connect(updateInfoPosition)
+    end
+
+    -- Make it a perfect circle
+    local btnCorner = Instance.new("UICorner")
+    btnCorner.CornerRadius = UDim.new(1, 0)
+    btnCorner.Parent = InfoBtn
+
+    -- Subtle border stroke (faded)
+    local btnStroke = Instance.new("UIStroke")
+    btnStroke.Color = Color3.fromRGB(100, 100, 100)
+    btnStroke.Thickness = 1
+    btnStroke.Transparency = 0.5
+    btnStroke.Parent = InfoBtn
+
+    -- "i" letter inside the circle (faded)
+    local iLabel = Instance.new("TextLabel")
+    iLabel.Name = "Icon"
+    iLabel.Parent = InfoBtn
+    iLabel.BackgroundTransparency = 1
+    iLabel.Size = UDim2.new(1, 0, 1, 0)
+    iLabel.Font = Enum.Font.GothamBold
+    iLabel.Text = "i"
+    iLabel.TextColor3 = Color3.fromRGB(140, 140, 140)
+    iLabel.TextTransparency = 0.3
+    iLabel.TextSize = 10
+    iLabel.ZIndex = 6
+    iLabel.TextXAlignment = Enum.TextXAlignment.Center
+    iLabel.TextYAlignment = Enum.TextYAlignment.Center
+
+    -- Hover effects
+    local hoverActive = false
+
+    InfoBtn.MouseEnter:Connect(function()
+        hoverActive = true
+        TweenService:Create(InfoBtn, TweenInfo.new(0.2, Enum.EasingStyle.Quint), {
+            BackgroundColor3 = Color3.fromRGB(43, 105, 159),
+            BackgroundTransparency = 0
+        }):Play()
+        TweenService:Create(btnStroke, TweenInfo.new(0.2, Enum.EasingStyle.Quint), {
+            Color = Color3.fromRGB(60, 140, 210),
+            Transparency = 0
+        }):Play()
+        TweenService:Create(iLabel, TweenInfo.new(0.2, Enum.EasingStyle.Quint), {
+            TextColor3 = Color3.fromRGB(255, 255, 255),
+            TextTransparency = 0
+        }):Play()
+        ShowInfoTooltip(InfoBtn, infoText)
+    end)
+
+    InfoBtn.MouseLeave:Connect(function()
+        hoverActive = false
+        TweenService:Create(InfoBtn, TweenInfo.new(0.2, Enum.EasingStyle.Quint), {
+            BackgroundColor3 = Color3.fromRGB(60, 60, 60),
+            BackgroundTransparency = 0.5
+        }):Play()
+        TweenService:Create(btnStroke, TweenInfo.new(0.2, Enum.EasingStyle.Quint), {
+            Color = Color3.fromRGB(100, 100, 100),
+            Transparency = 0.5
+        }):Play()
+        TweenService:Create(iLabel, TweenInfo.new(0.2, Enum.EasingStyle.Quint), {
+            TextColor3 = Color3.fromRGB(140, 140, 140),
+            TextTransparency = 0.3
+        }):Play()
+        task.delay(0.1, function()
+            if not hoverActive and _activeInfoButton == InfoBtn then
+                HideInfoTooltip()
+            end
+        end)
+    end)
+
+    -- Click/tap support (for mobile)
+    InfoBtn.MouseButton1Click:Connect(function()
+        if _activeInfoButton == InfoBtn then
+            HideInfoTooltip()
+        else
+            ShowInfoTooltip(InfoBtn, infoText)
+            local currentBtn = InfoBtn
+            task.delay(4, function()
+                if _activeInfoButton == currentBtn then
+                    HideInfoTooltip()
+                end
+            end)
+        end
+    end)
+
+    return InfoBtn
+end
+
+-- Hide tooltip when clicking elsewhere
+UserInputService.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+        if _activeInfoButton then
+            -- Check if click is outside tooltip and info button
+            local mousePos = UserInputService:GetMouseLocation()
+            local tooltipPos = InfoTooltip.AbsolutePosition
+            local tooltipSize = InfoTooltip.AbsoluteSize
+            local inTooltip = mousePos.X >= tooltipPos.X and mousePos.X <= tooltipPos.X + tooltipSize.X
+                and mousePos.Y >= tooltipPos.Y and mousePos.Y <= tooltipPos.Y + tooltipSize.Y
+
+            if not inTooltip then
+                local btnPos = _activeInfoButton.AbsolutePosition
+                local btnSize = _activeInfoButton.AbsoluteSize
+                local inBtn = mousePos.X >= btnPos.X and mousePos.X <= btnPos.X + btnSize.X
+                    and mousePos.Y >= btnPos.Y and mousePos.Y <= btnPos.Y + btnSize.Y
+
+                if not inBtn then
+                    HideInfoTooltip()
+                end
+            end
+        end
+    end
+end)
+
+--//============ END INFO TOOLTIP SYSTEM ============//--
+
+--//============ PIN / UNPIN SYSTEM ============//--
+-- Floating overlay that sits on the ScreenGui for unpinned elements
+local FloatingPanels = Instance.new("Frame")
+FloatingPanels.Name = "FloatingPanels"
+FloatingPanels.Parent = Rayfield
+FloatingPanels.BackgroundTransparency = 1
+FloatingPanels.Size = UDim2.new(1, 0, 1, 0)
+FloatingPanels.Position = UDim2.new(0, 0, 0, 0)
+FloatingPanels.ZIndex = 50
+FloatingPanels.ClipsDescendants = false
+
+-- Drop-zone highlight overlay (shown when dragging a floating element over the main window)
+local DropHighlight = Instance.new("Frame")
+DropHighlight.Name = "DropHighlight"
+DropHighlight.Parent = Rayfield
+DropHighlight.BackgroundColor3 = Color3.fromRGB(43, 105, 159)
+DropHighlight.BackgroundTransparency = 1
+DropHighlight.BorderSizePixel = 0
+DropHighlight.Size = UDim2.new(0, 0, 0, 3)
+DropHighlight.ZIndex = 60
+DropHighlight.Visible = false
+
+local DropHighlightCorner = Instance.new("UICorner")
+DropHighlightCorner.CornerRadius = UDim.new(0, 2)
+DropHighlightCorner.Parent = DropHighlight
+
+--- Stores per-element pin state:
+--- _pinData[element] = {
+---     IsPinned = true/false,
+---     OriginalParent = <Frame>,
+---     OriginalLayoutOrder = <number>,
+---     OriginalSize = <UDim2>,
+---     Ghost = <Frame or nil>,
+---     DragConnection = <RBXScriptConnection or nil>,
+---     RenderConnection = <RBXScriptConnection or nil>,
+---     PinButton = <ImageButton>,
+--- }
+local _pinData = {}
+
+--- Make a frame draggable by a drag-point (header area or full frame).
+--- Returns a function that disconnects dragging.
+local function MakePinDraggable(dragPoint, target)
+    local dragging = false
+    local didDrag = false -- tracks whether user actually moved the element
+    local dragInput, mousePos, framePos
+    local connections = {}
+
+    -- Helper: check if a screen position is within the target bounds
+    local function isInsideTarget(pos)
+        local absPos = target.AbsolutePosition
+        local absSize = target.AbsoluteSize
+        return pos.X >= absPos.X and pos.X <= absPos.X + absSize.X
+            and pos.Y >= absPos.Y and pos.Y <= absPos.Y + absSize.Y
+    end
+
+    -- Use global InputBegan so clicks on ANY child element also start the drag
+    table.insert(connections, UserInputService.InputBegan:Connect(function(input, gameProcessed)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+            if isInsideTarget(input.Position) then
+                dragging = true
+                didDrag = false
+                mousePos = input.Position
+                framePos = target.Position
+                input.Changed:Connect(function()
+                    if input.UserInputState == Enum.UserInputState.End then
+                        dragging = false
+                    end
+                end)
+            end
+        end
+    end))
+
+    table.insert(connections, UserInputService.InputChanged:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
+            dragInput = input
+        end
+        if input == dragInput and dragging then
+            didDrag = true
+            local delta = input.Position - mousePos
+            target.Position = UDim2.new(
+                framePos.X.Scale, framePos.X.Offset + delta.X,
+                framePos.Y.Scale, framePos.Y.Offset + delta.Y
+            )
+        end
+    end))
+
+    return function()
+        for _, conn in ipairs(connections) do
+            pcall(function() conn:Disconnect() end)
+        end
+        table.clear(connections)
+    end, function()
+        return dragging
+    end, function()
+        -- consumeDidDrag: returns true if user actually dragged, then resets
+        local was = didDrag
+        didDrag = false
+        return was
+    end
+end
+
+--- Get the predicted insertion LayoutOrder for re-docking.
+--- Walks the column children sorted by LayoutOrder to find the slot where dropY falls.
+local function GetInsertOrder(parentFrame, dropY)
+    local children = {}
+    for _, child in ipairs(parentFrame:GetChildren()) do
+        if child:IsA("GuiObject") and child.Name ~= "Placeholder" and child.Name ~= "SectionSpacing" and child.Name ~= "_PinGhost_" then
+            table.insert(children, child)
+        end
+    end
+    table.sort(children, function(a, b) return a.LayoutOrder < b.LayoutOrder end)
+
+    local insertOrder = (#children > 0) and (children[#children].LayoutOrder + 1) or 1
+    for i, child in ipairs(children) do
+        local midY = child.AbsolutePosition.Y + child.AbsoluteSize.Y / 2
+        if dropY < midY then
+            insertOrder = child.LayoutOrder
+            break
+        end
+    end
+    return insertOrder
+end
+
+--- Shift layout orders of children >= insertOrder up by 1 to make room.
+local function ShiftLayoutOrders(parentFrame, insertOrder)
+    for _, child in ipairs(parentFrame:GetChildren()) do
+        if child:IsA("GuiObject") and child.Name ~= "_PinGhost_" and child.LayoutOrder >= insertOrder then
+            child.LayoutOrder = child.LayoutOrder + 1
+        end
+    end
+end
+
+--- Check if a point (x, y) is within the main GUI scrolling frame.
+local function IsOverMainElements(x, y)
+    local elementsFrame = Elements
+    if not elementsFrame then return false end
+    -- Check the current visible tab page
+    local currentPage = elementsFrame.UIPageLayout.CurrentPage
+    if not currentPage then return false end
+    local pos = currentPage.AbsolutePosition
+    local sz = currentPage.AbsoluteSize
+    return x >= pos.X and x <= pos.X + sz.X and y >= pos.Y and y <= pos.Y + sz.Y
+end
+
+--- Get the current visible TabPage.
+local function GetCurrentTabPage()
+    if Elements and Elements.UIPageLayout and Elements.UIPageLayout.CurrentPage then
+        return Elements.UIPageLayout.CurrentPage
+    end
+    return nil
+end
+
+--- Dock a floating panel back into its original parent or current tab page.
+local function DockPanel(element, dropY)
+    local pd = _pinData[element]
+    if not pd or pd.IsPinned then return end
+
+    pd.IsPinned = true
+
+    -- Disconnect drag & render & drag-end connections
+    if pd.DragDisconnect then
+        pd.DragDisconnect()
+        pd.DragDisconnect = nil
+    end
+    if pd.RenderConnection then
+        pcall(function() pd.RenderConnection:Disconnect() end)
+        pd.RenderConnection = nil
+    end
+    if pd.DragEndConnection then
+        pcall(function() pd.DragEndConnection:Disconnect() end)
+        pd.DragEndConnection = nil
+    end
+
+    -- Determine target parent (original parent or current tab page)
+    local targetParent = pd.OriginalParent
+    if not targetParent or not targetParent.Parent then
+        targetParent = GetCurrentTabPage() or pd.OriginalParent
+    end
+
+    -- Calculate insertion order
+    local insertOrder
+    if dropY then
+        insertOrder = GetInsertOrder(targetParent, dropY)
+    else
+        insertOrder = pd.OriginalLayoutOrder or 1
+    end
+
+    -- Shift existing children to make room
+    ShiftLayoutOrders(targetParent, insertOrder)
+
+    -- Reparent
+    element.LayoutOrder = insertOrder
+    -- Don't parent to targetParent yet — we'll slide first, then reparent in the animation callback
+
+    -- Update pin icon to "pinned" state
+    if pd.PinButton then
+        RayfieldLibrary:_ApplyIcon(pd.PinButton, "pin")
+        pd.PinButton.ImageColor3 = Color3.fromRGB(180, 180, 180)
+        -- For regular elements on desktop (not sections, not mobile), hide the pin button again (hover-reveal)
+        local isSection = element:FindFirstChild('_UIPadding_') ~= nil
+        if not isSection and not isMobile then
+            pd.PinButton.BackgroundTransparency = 1
+            pd.PinButton.ImageTransparency = 1
+        end
+    end
+
+    -- If this is a section, restore PinButtons on child elements inside the Holder
+    local holder = element:FindFirstChild("Holder")
+    if holder then
+        for _, desc in ipairs(holder:GetDescendants()) do
+            if desc:IsA("ImageButton") and desc.Name == "PinButton" then
+                desc.Visible = true
+            end
+        end
+    end
+
+    -- Remove floating stroke
+    local floatStroke = element:FindFirstChild("_PinFloatStroke_")
+    if floatStroke then
+        floatStroke:Destroy()
+    end
+
+    -- Hide drop highlight
+    DropHighlight.Visible = false
+
+    -- Restore ZIndex on element and all descendants
+    if pd.OriginalZIndices then
+        element.ZIndex = pd.OriginalZIndices[element] or 1
+        for _, desc in ipairs(element:GetDescendants()) do
+            if desc:IsA("GuiObject") and pd.OriginalZIndices[desc] then
+                desc.ZIndex = pd.OriginalZIndices[desc]
+            end
+        end
+        pd.OriginalZIndices = nil
+    end
+
+    -- Animate: smooth slide from floating position back into the list
+    local floatAbsPosDock = FloatingPanels.AbsolutePosition
+    local curAbsPos = element.AbsolutePosition
+    local floatingX = curAbsPos.X - floatAbsPosDock.X
+    local floatingY = curAbsPos.Y - floatAbsPosDock.Y
+    local currentW = element.AbsoluteSize.X
+    local currentH = element.AbsoluteSize.Y
+
+    -- Temporarily keep element in FloatingPanels for the slide animation
+    element.Parent = FloatingPanels
+    element.AnchorPoint = Vector2.new(0, 0)
+    element.AutomaticSize = Enum.AutomaticSize.None
+    element.Size = UDim2.new(0, currentW, 0, currentH)
+    element.Position = UDim2.new(0, floatingX, 0, floatingY)
+
+    -- Determine where the ghost placeholder is on screen
+    local ghostTarget = pd.Ghost
+    local ghostAbsPos = ghostTarget and ghostTarget.AbsolutePosition or targetParent.AbsolutePosition
+    local slideTargetX = ghostAbsPos.X - floatAbsPosDock.X
+    local slideTargetY = ghostAbsPos.Y - floatAbsPosDock.Y
+
+    -- Get the target height
+    local targetH = pd.OriginalSize.Y.Offset
+    if targetH <= 0 then targetH = currentH end
+
+    -- Slide + shrink to match the ghost spot
+    local slideTween = TweenService:Create(element,
+        TweenInfo.new(0.35, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), {
+            Position = UDim2.new(0, slideTargetX, 0, slideTargetY),
+            Size = UDim2.new(pd.OriginalSize.X.Scale, pd.OriginalSize.X.Offset, 0, targetH),
+        })
+    slideTween:Play()
+    slideTween.Completed:Connect(function()
+        -- Now reparent into the actual list
+        element.Parent = targetParent
+        element.LayoutOrder = insertOrder
+        element.Position = UDim2.new(0, 0, 0, 0)
+
+        -- Re-enable auto size if element originally used it
+        -- For sections (AutomaticSize elements), skip restoring the small original Size
+        -- to avoid a collapse-then-expand flash. Instead, keep the current pixel size
+        -- and let AutomaticSize take over seamlessly.
+        if pd.HadAutoSize then
+            -- Set pixel size to match current absolute size so there's no visual jump
+            local absW = element.AbsoluteSize.X
+            local absH = element.AbsoluteSize.Y
+            element.Size = UDim2.new(pd.OriginalSize.X.Scale, pd.OriginalSize.X.Offset, 0, absH)
+            element.AutomaticSize = pd.HadAutoSize
+        else
+            element.Size = pd.OriginalSize
+        end
+
+        -- Destroy ghost
+        if pd.Ghost and pd.Ghost.Parent then
+            pd.Ghost:Destroy()
+            pd.Ghost = nil
+        end
+    end)
+end
+
+--- Unpin an element from its parent and float it on the overlay.
+local function UnpinPanel(element)
+    local pd = _pinData[element]
+    if not pd or not pd.IsPinned then return end
+
+    pd.IsPinned = false
+    pd.OriginalParent = element.Parent
+    pd.OriginalSize = element.Size
+    pd.HadAutoSize = (element.AutomaticSize ~= Enum.AutomaticSize.None) and element.AutomaticSize or nil
+
+    -- Assign unique sequential LayoutOrder to all siblings based on current visual order
+    -- This ensures the ghost and re-docking position are correctly tracked
+    local parent = element.Parent
+    if parent then
+        local siblings = {}
+        for _, child in ipairs(parent:GetChildren()) do
+            if child:IsA("GuiObject") and child.Name ~= "Placeholder" and child.Name ~= "SectionSpacing" and child.Name ~= "_PinGhost_" then
+                table.insert(siblings, child)
+            end
+        end
+        -- Sort by current LayoutOrder first, then by child index for ties
+        table.sort(siblings, function(a, b)
+            if a.LayoutOrder ~= b.LayoutOrder then
+                return a.LayoutOrder < b.LayoutOrder
+            end
+            -- Same LayoutOrder: preserve instance (child) order
+            for _, child in ipairs(parent:GetChildren()) do
+                if child == a then return true end
+                if child == b then return false end
+            end
+            return false
+        end)
+        for i, sibling in ipairs(siblings) do
+            sibling.LayoutOrder = i
+        end
+    end
+
+    pd.OriginalLayoutOrder = element.LayoutOrder
+
+    -- Create ghost placeholder in original position
+    local ghost = Instance.new("Frame")
+    ghost.Name = "_PinGhost_"
+    ghost.BackgroundTransparency = 0.85
+    ghost.BackgroundColor3 = Color3.fromRGB(43, 105, 159)
+    ghost.BorderSizePixel = 0
+    local ghostHeight = math.max(36, element.AbsoluteSize.Y)
+    ghost.Size = UDim2.new(element.Size.X.Scale, element.Size.X.Offset, 0, ghostHeight)
+    ghost.LayoutOrder = element.LayoutOrder
+    ghost.Parent = pd.OriginalParent
+    ghost.Visible = true
+
+    local ghostCorner = Instance.new("UICorner")
+    ghostCorner.CornerRadius = UDim.new(0, 5)
+    ghostCorner.Parent = ghost
+
+    local ghostStroke = Instance.new("UIStroke")
+    ghostStroke.Color = Color3.fromRGB(43, 105, 159)
+    ghostStroke.Thickness = 1
+    ghostStroke.Transparency = 0.5
+    ghostStroke.Parent = ghost
+
+    -- Resolve display name: use stored ElementName from _pinData, then try Title.Text, then element.Name
+    local displayName = (pd.ElementName and pd.ElementName ~= "" and pd.ElementName)
+        or (element:FindFirstChild("Title") and element.Title:IsA("TextLabel") and element.Title.Text)
+        or element.Name or "Element"
+
+    -- Inner holder to center icon + text as a group
+    local ghostCenter = Instance.new("Frame")
+    ghostCenter.Name = "GhostCenter"
+    ghostCenter.BackgroundTransparency = 1
+    ghostCenter.AnchorPoint = Vector2.new(0.5, 0.5)
+    ghostCenter.Position = UDim2.new(0.5, 0, 0.5, 0)
+    ghostCenter.AutomaticSize = Enum.AutomaticSize.X
+    ghostCenter.Size = UDim2.new(0, 0, 1, 0)
+    ghostCenter.Parent = ghost
+
+    local ghostLayout = Instance.new("UIListLayout")
+    ghostLayout.FillDirection = Enum.FillDirection.Horizontal
+    ghostLayout.VerticalAlignment = Enum.VerticalAlignment.Center
+    ghostLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center
+    ghostLayout.Padding = UDim.new(0, 5)
+    ghostLayout.Parent = ghostCenter
+
+    -- Ghost pin icon (Lucide)
+    local ghostIcon = Instance.new("ImageLabel")
+    ghostIcon.Name = "GhostIcon"
+    ghostIcon.BackgroundTransparency = 1
+    ghostIcon.Size = UDim2.new(0, 14, 0, 14)
+    ghostIcon.ImageColor3 = Color3.fromRGB(43, 105, 159)
+    ghostIcon.ImageTransparency = 0.4
+    ghostIcon.LayoutOrder = 1
+    ghostIcon.Parent = ghostCenter
+    RayfieldLibrary:_ApplyIcon(ghostIcon, "pin")
+
+    local ghostLabel = Instance.new("TextLabel")
+    ghostLabel.Name = "GhostLabel"
+    ghostLabel.BackgroundTransparency = 1
+    ghostLabel.AutomaticSize = Enum.AutomaticSize.X
+    ghostLabel.Size = UDim2.new(0, 0, 1, 0)
+    ghostLabel.Font = Enum.Font.GothamMedium
+    ghostLabel.Text = displayName
+    ghostLabel.TextColor3 = Color3.fromRGB(43, 105, 159)
+    ghostLabel.TextTransparency = 0.4
+    ghostLabel.TextSize = 13
+    ghostLabel.LayoutOrder = 2
+    ghostLabel.Parent = ghostCenter
+
+    pd.Ghost = ghost
+
+    -- Calculate screen position before reparenting
+    local absPos = element.AbsolutePosition
+    local absSize = element.AbsoluteSize
+
+    -- Disable automatic size and set fixed pixel size
+    element.AutomaticSize = Enum.AutomaticSize.None
+    element.Size = UDim2.new(0, absSize.X, 0, absSize.Y)
+
+    -- Reparent to floating overlay
+    element.Parent = FloatingPanels
+
+    -- FIX: Subtract FloatingPanels' own AbsolutePosition to get correct local coords
+    local floatAbsPos = FloatingPanels.AbsolutePosition
+    local startX = absPos.X - floatAbsPos.X
+    local startY = absPos.Y - floatAbsPos.Y
+
+    -- Determine which side of Main has more space, and slide the element there
+    local screenWidth = Camera.ViewportSize.X
+    local mainAbsPos = Main.AbsolutePosition
+    local mainAbsSize = Main.AbsoluteSize
+    local spaceLeft = mainAbsPos.X
+    local spaceRight = screenWidth - (mainAbsPos.X + mainAbsSize.X)
+    local gap = 12 -- pixels between Main and the floating element
+
+    local finalX
+    if spaceRight >= absSize.X + gap then
+        -- Enough room on the right
+        finalX = (mainAbsPos.X + mainAbsSize.X + gap) - floatAbsPos.X
+    elseif spaceLeft >= absSize.X + gap then
+        -- Enough room on the left
+        finalX = (mainAbsPos.X - absSize.X - gap) - floatAbsPos.X
+    elseif spaceRight >= spaceLeft then
+        -- More space on right, even if tight
+        finalX = (mainAbsPos.X + mainAbsSize.X + gap) - floatAbsPos.X
+    else
+        -- More space on left
+        finalX = (mainAbsPos.X - absSize.X - gap) - floatAbsPos.X
+    end
+    -- Clamp so it doesn't go off-screen
+    finalX = math.max(0, math.min(finalX, screenWidth - absSize.X - floatAbsPos.X))
+
+    -- Stack vertically: find existing floating panels on this side and offset below them
+    local stackY = 0
+    local stackGap = 8
+    for otherElem, otherPd in pairs(_pinData) do
+        if otherElem ~= element and not otherPd.IsPinned and otherElem.Parent == FloatingPanels then
+            local otherPos = otherElem.AbsolutePosition
+            local otherSize = otherElem.AbsoluteSize
+            local otherLeft = otherPos.X - floatAbsPos.X
+            local otherRight = otherLeft + otherSize.X
+            -- Check if they overlap horizontally (same column)
+            if finalX < otherRight and (finalX + absSize.X) > otherLeft then
+                local otherBottom = (otherPos.Y - floatAbsPos.Y) + otherSize.Y + stackGap
+                if otherBottom > stackY then
+                    stackY = otherBottom
+                end
+            end
+        end
+    end
+    local finalY = math.max(0, stackY > 0 and stackY or startY)
+
+    -- Start slightly scaled down at original position for a pop-out effect
+    element.AnchorPoint = Vector2.new(0.5, 0.5)
+    local centerX = startX + absSize.X / 2
+    local centerY = startY + absSize.Y / 2
+    element.Position = UDim2.new(0, centerX, 0, centerY)
+    element.Size = UDim2.new(0, absSize.X * 0.92, 0, absSize.Y * 0.92)
+
+    -- Animate: scale up + slide to the side of Main
+    local finalCenterX = finalX + absSize.X / 2
+    local finalCenterY = finalY + absSize.Y / 2
+    local popTween = TweenService:Create(element, TweenInfo.new(0.4, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
+        Size = UDim2.new(0, absSize.X, 0, absSize.Y),
+        Position = UDim2.new(0, finalCenterX, 0, finalCenterY),
+    })
+    popTween:Play()
+    popTween.Completed:Connect(function()
+        -- Reset anchor back to top-left for dragging consistency
+        element.AnchorPoint = Vector2.new(0, 0)
+        element.Position = UDim2.new(0, finalX, 0, finalY)
+    end)
+
+    -- FIX: Bump ZIndex uniformly on element AND all descendants so they render above Main
+    -- IMPORTANT: use the same offset for parent and children to preserve relative order,
+    -- otherwise the parent background can render on top of child text.
+    local zOffset = 50
+    local savedZ = {}
+    savedZ[element] = element.ZIndex
+    element.ZIndex = element.ZIndex + zOffset
+    for _, desc in ipairs(element:GetDescendants()) do
+        if desc:IsA("GuiObject") then
+            savedZ[desc] = desc.ZIndex
+            desc.ZIndex = desc.ZIndex + zOffset
+        end
+    end
+    pd.OriginalZIndices = savedZ
+
+    -- Add a subtle floating stroke to signal detached state (white, not fading text)
+    local floatStroke = element:FindFirstChild("_PinFloatStroke_")
+    if not floatStroke then
+        floatStroke = Instance.new("UIStroke")
+        floatStroke.Name = "_PinFloatStroke_"
+        floatStroke.Color = Color3.fromRGB(255, 255, 255)
+        floatStroke.Thickness = 1.5
+        floatStroke.Transparency = 0.3
+        floatStroke.Parent = element
+    end
+
+    -- Update pin icon to "unpinned" state
+    if pd.PinButton then
+        RayfieldLibrary:_ApplyIcon(pd.PinButton, "pin-off")
+        pd.PinButton.ImageColor3 = Color3.fromRGB(255, 255, 255)
+        -- Force pin button visible when floating (so user can re-dock)
+        pd.PinButton.BackgroundTransparency = 0.6
+        pd.PinButton.ImageTransparency = 0.3
+    end
+
+    -- If this is a section, hide PinButtons on child elements inside the Holder
+    local holder = element:FindFirstChild("Holder")
+    if holder then
+        for _, desc in ipairs(holder:GetDescendants()) do
+            if desc:IsA("ImageButton") and desc.Name == "PinButton" then
+                desc.Visible = false
+            end
+        end
+    end
+
+    -- Make draggable
+    local disconnectDrag, isDragging, consumeDidDrag = MakePinDraggable(element, element)
+    pd.DragDisconnect = disconnectDrag
+
+    -- FIX: Debounce flag — ignore auto-dock for a short time after unpinning
+    -- This prevents the very next mouse-up (from the pin-button click itself)
+    -- from immediately re-docking the element.
+    local unpinReady = false
+    task.delay(0.3, function()
+        unpinReady = true
+    end)
+
+    -- RenderStepped loop: watch panel center position for drop-zone highlighting
+    pd.RenderConnection = RunService.RenderStepped:Connect(function()
+        if not pd or pd.IsPinned then return end
+
+        local panelPos = element.AbsolutePosition
+        local panelSize = element.AbsoluteSize
+        local centerX = panelPos.X + panelSize.X / 2
+        local centerY = panelPos.Y + panelSize.Y / 2
+
+        if IsOverMainElements(centerX, centerY) and isDragging() then
+            -- Show drop highlight only while actively dragging
+            DropHighlight.Visible = true
+            local currentPage = GetCurrentTabPage()
+            if currentPage then
+                local insertOrder = GetInsertOrder(currentPage, centerY)
+                -- Find the Y position for the highlight line
+                local hlY = currentPage.AbsolutePosition.Y
+                local children = {}
+                for _, child in ipairs(currentPage:GetChildren()) do
+                    if child:IsA("GuiObject") and child.Name ~= "Placeholder" and child.Name ~= "SectionSpacing" and child.Name ~= "_PinGhost_" then
+                        table.insert(children, child)
+                    end
+                end
+                table.sort(children, function(a, b) return a.LayoutOrder < b.LayoutOrder end)
+                for _, child in ipairs(children) do
+                    if child.LayoutOrder < insertOrder then
+                        hlY = child.AbsolutePosition.Y + child.AbsoluteSize.Y + 2
+                    end
+                end
+                DropHighlight.Position = UDim2.new(0, currentPage.AbsolutePosition.X + 5, 0, hlY)
+                DropHighlight.Size = UDim2.new(0, currentPage.AbsoluteSize.X - 10, 0, 3)
+            end
+            TweenService:Create(DropHighlight, TweenInfo.new(0.15), { BackgroundTransparency = 0.3 }):Play()
+        else
+            TweenService:Create(DropHighlight, TweenInfo.new(0.15), { BackgroundTransparency = 1 }):Play()
+        end
+    end)
+
+    -- Auto-dock on drag release over main elements
+    -- FIX: Only dock when user was ACTUALLY DRAGGING (not just any mouse click),
+    -- and only after the debounce period has passed.
+    local dragEndConn
+    dragEndConn = UserInputService.InputEnded:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+            if not pd.IsPinned and unpinReady then
+                -- Only auto-dock if the user actually moved/dragged the element
+                if not consumeDidDrag() then return end
+                task.defer(function()
+                    if pd.IsPinned then return end
+                    local panelPos = element.AbsolutePosition
+                    local panelSize = element.AbsoluteSize
+                    local centerX = panelPos.X + panelSize.X / 2
+                    local centerY = panelPos.Y + panelSize.Y / 2
+                    if IsOverMainElements(centerX, centerY) then
+                        DockPanel(element, centerY)
+                    end
+                end)
+            elseif pd.IsPinned then
+                pcall(function() dragEndConn:Disconnect() end)
+                pd.DragEndConnection = nil
+            end
+        end
+    end)
+    pd.DragEndConnection = dragEndConn
+end
+
+--- Creates a small pin icon button on the top-right corner of an element.
+--- When clicked, toggles pin/unpin state.
+--- @param parentElement Frame -- The element frame (Button, Toggle, Slider, Section, etc.)
+--- @param elementName string -- Display name for the ghost placeholder
+local function CreatePinButton(parentElement, elementName)
+    if not parentElement then return end
+
+    -- Initialize pin data
+    _pinData[parentElement] = {
+        IsPinned = true,
+        ElementName = elementName,
+        OriginalParent = parentElement.Parent,
+        OriginalLayoutOrder = parentElement.LayoutOrder,
+        OriginalSize = parentElement.Size,
+        Ghost = nil,
+        DragDisconnect = nil,
+        RenderConnection = nil,
+        PinButton = nil,
+    }
+
+    -- Determine if this is a section (has _UIPadding_) or a regular element
+    local isSection = parentElement:FindFirstChild('_UIPadding_') ~= nil
+
+    -- Create the pin icon button
+    local PinBtn = Instance.new("ImageButton")
+    PinBtn.Name = "PinButton"
+    PinBtn.Parent = parentElement
+    PinBtn.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+    PinBtn.AnchorPoint = Vector2.new(1, 0)
+    PinBtn.ZIndex = 55
+    PinBtn.BorderSizePixel = 0
+    PinBtn.ImageColor3 = Color3.fromRGB(180, 180, 180)
+
+    if isSection then
+        PinBtn.Size = UDim2.new(0, 16, 0, 16)
+        PinBtn.Position = UDim2.new(1, -4, 0, 4)
+    else
+        PinBtn.Size = UDim2.new(0, 12, 0, 12)
+        PinBtn.Position = UDim2.new(1, -2, 0, 2)
+    end
+    PinBtn.AutoButtonColor = false
+
+    if isSection or isMobile then
+        -- Sections and mobile: always visible, subtle
+        PinBtn.BackgroundTransparency = 0.6
+        PinBtn.ImageTransparency = 0.3
+    else
+        -- Regular elements on desktop: hidden by default, revealed on hover
+        PinBtn.BackgroundTransparency = 1
+        PinBtn.ImageTransparency = 1
+    end
+
+    -- Apply Lucide "pin" icon
+    RayfieldLibrary:_ApplyIcon(PinBtn, "pin")
+
+    local pinCorner = Instance.new("UICorner")
+    pinCorner.CornerRadius = UDim.new(0, 4)
+    pinCorner.Parent = PinBtn
+
+    _pinData[parentElement].PinButton = PinBtn
+
+    -- For regular elements on desktop: show/hide pin on element hover
+    if not isSection and not isMobile then
+        local elementHovered = false
+        local pinHovered = false
+
+        local function showPin()
+            TweenService:Create(PinBtn, TweenInfo.new(0.2, Enum.EasingStyle.Quint), {
+                BackgroundTransparency = 0.6,
+                ImageTransparency = 0.3
+            }):Play()
+        end
+
+        local function hidePin()
+            -- Don't hide if element is unpinned (floating) — keep it visible for re-docking
+            local pd = _pinData[parentElement]
+            if pd and not pd.IsPinned then return end
+            TweenService:Create(PinBtn, TweenInfo.new(0.25, Enum.EasingStyle.Quint), {
+                BackgroundTransparency = 1,
+                ImageTransparency = 1
+            }):Play()
+        end
+
+        parentElement.MouseEnter:Connect(function()
+            elementHovered = true
+            showPin()
+        end)
+        parentElement.MouseLeave:Connect(function()
+            elementHovered = false
+            task.delay(0.1, function()
+                if not elementHovered and not pinHovered then
+                    hidePin()
+                end
+            end)
+        end)
+        PinBtn.MouseEnter:Connect(function()
+            pinHovered = true
+            -- Highlight effect on direct pin hover
+            TweenService:Create(PinBtn, TweenInfo.new(0.2, Enum.EasingStyle.Quint), {
+                BackgroundTransparency = 0.2,
+                ImageTransparency = 0,
+                ImageColor3 = Color3.fromRGB(255, 255, 255)
+            }):Play()
+        end)
+        PinBtn.MouseLeave:Connect(function()
+            pinHovered = false
+            local pd = _pinData[parentElement]
+            local color = (pd and not pd.IsPinned) and Color3.fromRGB(255, 150, 50) or Color3.fromRGB(180, 180, 180)
+            if elementHovered then
+                -- Still hovering element, show pin in normal state
+                TweenService:Create(PinBtn, TweenInfo.new(0.2, Enum.EasingStyle.Quint), {
+                    BackgroundTransparency = 0.6,
+                    ImageTransparency = 0.3,
+                    ImageColor3 = color
+                }):Play()
+            else
+                task.delay(0.1, function()
+                    if not elementHovered and not pinHovered then
+                        hidePin()
+                    end
+                end)
+            end
+        end)
+    else
+        -- Section / mobile elements: always visible, hover effects on desktop, tap feedback on mobile
+        PinBtn.MouseEnter:Connect(function()
+            TweenService:Create(PinBtn, TweenInfo.new(0.2, Enum.EasingStyle.Quint), {
+                BackgroundTransparency = 0.2,
+                ImageTransparency = 0,
+                ImageColor3 = Color3.fromRGB(255, 255, 255)
+            }):Play()
+        end)
+        PinBtn.MouseLeave:Connect(function()
+            local pd = _pinData[parentElement]
+            local color = (pd and not pd.IsPinned) and Color3.fromRGB(255, 150, 50) or Color3.fromRGB(180, 180, 180)
+            TweenService:Create(PinBtn, TweenInfo.new(0.2, Enum.EasingStyle.Quint), {
+                BackgroundTransparency = 0.6,
+                ImageTransparency = 0.3,
+                ImageColor3 = color
+            }):Play()
+        end)
+    end
+
+    -- Click/tap: toggle pin/unpin with visual feedback
+    PinBtn.MouseButton1Click:Connect(function()
+        -- Brief tap flash feedback (works on both mobile and desktop)
+        TweenService:Create(PinBtn, TweenInfo.new(0.1, Enum.EasingStyle.Quint), {
+            BackgroundTransparency = 0,
+            ImageTransparency = 0,
+            ImageColor3 = Color3.fromRGB(255, 255, 255)
+        }):Play()
+        task.delay(0.15, function()
+            local pd = _pinData[parentElement]
+            if pd then
+                local color = (not pd.IsPinned) and Color3.fromRGB(255, 150, 50) or Color3.fromRGB(180, 180, 180)
+                TweenService:Create(PinBtn, TweenInfo.new(0.2, Enum.EasingStyle.Quint), {
+                    BackgroundTransparency = 0.6,
+                    ImageTransparency = 0.3,
+                    ImageColor3 = color
+                }):Play()
+            end
+        end)
+
+        local pd = _pinData[parentElement]
+        if not pd then return end
+        if pd.IsPinned then
+            UnpinPanel(parentElement)
+        else
+            DockPanel(parentElement, nil)
+        end
+    end)
+
+    return PinBtn
+end
+
+--//============ END PIN / UNPIN SYSTEM ============//--
+
 function ChangeTheme(ThemeName)
     SelectedTheme = RayfieldLibrary.Theme[ThemeName]
     for _, obj in ipairs(Rayfield:GetDescendants()) do
@@ -1290,18 +2360,40 @@ function Unhide()
     -- Reapply tab style when GUI is reopened
     RayfieldLibrary:ToggleOldTabStyle(CurrentTabStyle)
 
-    -- Restore TopList children transparency if using new tab style
+    -- Restore tabs based on current style
     if TabsList == TopList then
+        -- New tab style: restore TopList tab buttons with selected/unselected states
         for _, tabbtn in ipairs(TopList:GetChildren()) do
             if tabbtn.ClassName == "Frame" and tabbtn.Name ~= "Placeholder" then
-                TweenService:Create(tabbtn.Image, TweenInfo.new(0.3, Enum.EasingStyle.Quint), { ImageTransparency = 0 })
-                    :Play()
-                TweenService:Create(tabbtn.Title, TweenInfo.new(0.3, Enum.EasingStyle.Quint), { TextTransparency = 0 })
-                    :Play()
-                TweenService:Create(tabbtn.Shadow, TweenInfo.new(0.3, Enum.EasingStyle.Quint), { ImageTransparency = 0 })
-                    :Play()
+                if tostring(Elements.UIPageLayout.CurrentPage) == tabbtn.Title.Text then
+                    TweenService:Create(tabbtn, TweenInfo.new(0.3, Enum.EasingStyle.Quint),
+                        { BackgroundTransparency = 0 }):Play()
+                    TweenService:Create(tabbtn.Image, TweenInfo.new(0.3, Enum.EasingStyle.Quint),
+                        { ImageTransparency = 0 }):Play()
+                    TweenService:Create(tabbtn.Title, TweenInfo.new(0.3, Enum.EasingStyle.Quint),
+                        { TextTransparency = 0 }):Play()
+                    TweenService:Create(tabbtn.UIStroke, TweenInfo.new(0.3, Enum.EasingStyle.Quint), { Transparency = 1 })
+                        :Play()
+                    TweenService:Create(tabbtn.Shadow, TweenInfo.new(0.3, Enum.EasingStyle.Quint),
+                        { ImageTransparency = 0.9 }):Play()
+                else
+                    TweenService:Create(tabbtn, TweenInfo.new(0.3, Enum.EasingStyle.Quint),
+                        { BackgroundTransparency = 0.7 }):Play()
+                    TweenService:Create(tabbtn.Shadow, TweenInfo.new(0.3, Enum.EasingStyle.Quint),
+                        { ImageTransparency = 0.7 }):Play()
+                    TweenService:Create(tabbtn.Image, TweenInfo.new(0.3, Enum.EasingStyle.Quint),
+                        { ImageTransparency = 0.2 }):Play()
+                    TweenService:Create(tabbtn.Title, TweenInfo.new(0.3, Enum.EasingStyle.Quint),
+                        { TextTransparency = 0.2 }):Play()
+                    TweenService:Create(tabbtn.UIStroke, TweenInfo.new(0.3, Enum.EasingStyle.Quint), { Transparency = 0 })
+                        :Play()
+                end
             end
         end
+    else
+        -- Old tab style (sidebar): reopen sidebar since Hide closed it
+        SideBarClosed = true
+        task.spawn(OpenSideBar)
     end
 
     if Minimised then
@@ -1335,7 +2427,9 @@ function Unhide()
                         end
                         for _, child in ipairs(element:GetChildren()) do
                             if (child.ClassName == "Frame" or child.ClassName == "TextLabel" or child.ClassName == "TextBox" or child.ClassName == "ImageButton" or child.ClassName == "ImageLabel") then
-                                child.Visible = true
+                                if not child:GetAttribute("_HiddenByDefault") then
+                                    child.Visible = true
+                                end
                             end
                         end
                     elseif element:FindFirstChild('ColorPickerIs') then
@@ -1472,7 +2566,9 @@ function Maximise()
                         end
                         for _, child in ipairs(element:GetChildren()) do
                             if (child.ClassName == "Frame" or child.ClassName == "TextLabel" or child.ClassName == "TextBox" or child.ClassName == "ImageButton" or child.ClassName == "ImageLabel") then
-                                child.Visible = true
+                                if not child:GetAttribute("_HiddenByDefault") then
+                                    child.Visible = true
+                                end
                             end
                         end
                     elseif element:FindFirstChild('ColorPickerIs') then
@@ -1719,6 +2815,7 @@ function RayfieldLibrary:CreateWindow(Settings)
     SideList.SideTemplate.Visible = false
     Notifications.Template.Visible = false
     Notifications.Visible = true
+
     Elements.Template.LayoutOrder = 100000
     Elements.UIPageLayout.FillDirection = Enum.FillDirection.Horizontal
 
@@ -1933,6 +3030,16 @@ function RayfieldLibrary:CreateWindow(Settings)
             TweenService:Create(Button.UIStroke, TweenInfo.new(0.7, Enum.EasingStyle.Quint), { Transparency = 0 }):Play()
             TweenService:Create(Button.Title, TweenInfo.new(0.7, Enum.EasingStyle.Quint), { TextTransparency = 0 }):Play()
 
+            -- Info tooltip
+            if ButtonSettings.Info then
+                CreateInfoButton(Button, ButtonSettings.Info, Button.Title)
+            end
+
+            -- Pin button (Pinnable)
+            if ButtonSettings.Pinnable then
+                CreatePinButton(Button, ButtonSettings.Name)
+            end
+
             Button.Interact.MouseButton1Click:Connect(function()
                 if ButtonValue.Locked or ButtonValue.Disabled then return end
                 local Success, Response = pcall(ButtonSettings.Callback)
@@ -1942,7 +3049,8 @@ function RayfieldLibrary:CreateWindow(Settings)
                             { BackgroundColor3 = Color3.fromRGB(85, 0, 0) }):Play()
                         TweenService:Create(Button.ElementIndicator, TweenInfo.new(0.6, Enum.EasingStyle.Quint),
                             { TextTransparency = 1 }):Play()
-                        TweenService:Create(Button.UIStroke, TweenInfo.new(0.6, Enum.EasingStyle.Quint), { Transparency = 1 })
+                        TweenService:Create(Button.UIStroke, TweenInfo.new(0.6, Enum.EasingStyle.Quint),
+                            { Transparency = 1 })
                             :Play()
                         Button.Title.Text = "Callback Error"
                         print("Rayfield | " .. ButtonSettings.Name .. " Callback Error " .. tostring(Response))
@@ -1950,7 +3058,8 @@ function RayfieldLibrary:CreateWindow(Settings)
                         Button.Title.Text = ButtonSettings.Name
                         TweenService:Create(Button, TweenInfo.new(0.6, Enum.EasingStyle.Quint),
                             { BackgroundColor3 = SelectedTheme.ElementBackground }):Play()
-                        TweenService:Create(Button.UIStroke, TweenInfo.new(0.6, Enum.EasingStyle.Quint), { Transparency = 0 })
+                        TweenService:Create(Button.UIStroke, TweenInfo.new(0.6, Enum.EasingStyle.Quint),
+                            { Transparency = 0 })
                             :Play()
                         TweenService:Create(Button.ElementIndicator, TweenInfo.new(0.6, Enum.EasingStyle.Quint),
                             { TextTransparency = 0.9 }):Play()
@@ -1959,12 +3068,14 @@ function RayfieldLibrary:CreateWindow(Settings)
                             { BackgroundColor3 = SelectedTheme.ElementBackgroundHover }):Play()
                         TweenService:Create(Button.ElementIndicator, TweenInfo.new(0.6, Enum.EasingStyle.Quint),
                             { TextTransparency = 1 }):Play()
-                        TweenService:Create(Button.UIStroke, TweenInfo.new(0.6, Enum.EasingStyle.Quint), { Transparency = 1 })
+                        TweenService:Create(Button.UIStroke, TweenInfo.new(0.6, Enum.EasingStyle.Quint),
+                            { Transparency = 1 })
                             :Play()
                         wait(0.2)
                         TweenService:Create(Button, TweenInfo.new(0.6, Enum.EasingStyle.Quint),
                             { BackgroundColor3 = SelectedTheme.ElementBackground }):Play()
-                        TweenService:Create(Button.UIStroke, TweenInfo.new(0.6, Enum.EasingStyle.Quint), { Transparency = 0 })
+                        TweenService:Create(Button.UIStroke, TweenInfo.new(0.6, Enum.EasingStyle.Quint),
+                            { Transparency = 0 })
                             :Play()
                         TweenService:Create(Button.ElementIndicator, TweenInfo.new(0.6, Enum.EasingStyle.Quint),
                             { TextTransparency = 0.9 }):Play()
@@ -2052,7 +3163,7 @@ function RayfieldLibrary:CreateWindow(Settings)
         end
 
         -- Section
-        function Tab:CreateSection(SectionName, Display, DefaultHide, Icon)
+        function Tab:CreateSection(SectionName, Display, DefaultHide, Icon, Pinnable)
             local SectionValue = {
                 Holder = Rayfield.Holding,
                 Open = true
@@ -2084,6 +3195,11 @@ function RayfieldLibrary:CreateWindow(Settings)
             Section.Title.TextTransparency = 1
             TweenService:Create(Section.Title, TweenInfo.new(0.7, Enum.EasingStyle.Quint), { TextTransparency = 0 })
                 :Play()
+
+            -- Pin button (Pinnable) for sections
+            if Pinnable then
+                CreatePinButton(Section, SectionName)
+            end
 
             function SectionValue:Set(NewSection)
                 Section.Title.Text = NewSection
@@ -2130,6 +3246,9 @@ function RayfieldLibrary:CreateWindow(Settings)
 
             Section.Clickable.MouseButton1Down:Connect(function()
                 if Debounce then return end
+                -- Block collapsing while the section is floating (unpinned)
+                local pd = _pinData[Section]
+                if pd and not pd.IsPinned then return end
                 if SectionValue.Open then
                     --Section.Holder.Visible = true
                     Debounce = true
@@ -2182,7 +3301,9 @@ function RayfieldLibrary:CreateWindow(Settings)
                                 end
                                 for _, child in ipairs(element:GetChildren()) do
                                     if (child.ClassName == "Frame" or child.ClassName == "TextLabel" or child.ClassName == "TextBox" or child.ClassName == "ImageButton" or child.ClassName == "ImageLabel") then
-                                        child.Visible = true
+                                        if not child:GetAttribute("_HiddenByDefault") then
+                                            child.Visible = true
+                                        end
                                     end
                                 end
                             elseif element:FindFirstChild('ColorPickerIs') then
@@ -2225,7 +3346,7 @@ function RayfieldLibrary:CreateWindow(Settings)
         end
 
         -- Label
-        function Tab:CreateLabel(LabelText, SectionParent)
+        function Tab:CreateLabel(LabelText, SectionParent, Pinnable)
             local LabelValue = {}
 
             local Label = Elements.Template.Label:Clone()
@@ -2252,6 +3373,11 @@ function RayfieldLibrary:CreateWindow(Settings)
             TweenService:Create(Label, TweenInfo.new(0.7, Enum.EasingStyle.Quint), { BackgroundTransparency = 0 }):Play()
             TweenService:Create(Label.UIStroke, TweenInfo.new(0.7, Enum.EasingStyle.Quint), { Transparency = 0 }):Play()
             TweenService:Create(Label.Title, TweenInfo.new(0.7, Enum.EasingStyle.Quint), { TextTransparency = 0 }):Play()
+
+            -- Pin button (Pinnable)
+            if Pinnable then
+                CreatePinButton(Label, LabelText)
+            end
 
             function LabelValue:Set(NewLabel)
                 Label.Title.Text = NewLabel
@@ -2309,6 +3435,11 @@ function RayfieldLibrary:CreateWindow(Settings)
                 :Play()
             TweenService:Create(Paragraph.Content, TweenInfo.new(0.7, Enum.EasingStyle.Quint), { TextTransparency = 0 })
                 :Play()
+
+            -- Pin button (Pinnable)
+            if ParagraphSettings.Pinnable then
+                CreatePinButton(Paragraph, ParagraphSettings.Title)
+            end
 
             function ParagraphValue:Set(NewParagraphSettings)
                 Paragraph.Title.Text = NewParagraphSettings.Title
@@ -2376,6 +3507,16 @@ function RayfieldLibrary:CreateWindow(Settings)
             TweenService:Create(Input, TweenInfo.new(0.7, Enum.EasingStyle.Quint), { BackgroundTransparency = 0 }):Play()
             TweenService:Create(Input.UIStroke, TweenInfo.new(0.7, Enum.EasingStyle.Quint), { Transparency = 0 }):Play()
             TweenService:Create(Input.Title, TweenInfo.new(0.7, Enum.EasingStyle.Quint), { TextTransparency = 0 }):Play()
+
+            -- Info tooltip
+            if InputSettings.Info then
+                CreateInfoButton(Input, InputSettings.Info, Input.Title)
+            end
+
+            -- Pin button (Pinnable)
+            if InputSettings.Pinnable then
+                CreatePinButton(Input, InputSettings.Name)
+            end
 
             Input.InputFrame.InputBox.PlaceholderText = InputSettings.PlaceholderText
 
@@ -2578,7 +3719,10 @@ function RayfieldLibrary:CreateWindow(Settings)
             if DropdownSettings.Icon then
                 RayfieldLibrary:_ApplyIcon(Dropdown.Icon, DropdownSettings.Icon)
                 Dropdown.Icon.Visible = true
+                Dropdown.Icon:SetAttribute("_HiddenByDefault", false)
                 Dropdown.Title.Position = UDim2.new(0, 50, 0, 22)
+            else
+                Dropdown.Icon:SetAttribute("_HiddenByDefault", true)
             end
 
             Dropdown.BackgroundTransparency = 1
@@ -2593,6 +3737,16 @@ function RayfieldLibrary:CreateWindow(Settings)
                 :Play()
             TweenService:Create(Dropdown.Title, TweenInfo.new(0.7, Enum.EasingStyle.Quint), { TextTransparency = 0 })
                 :Play()
+
+            -- Info tooltip
+            if DropdownSettings.Info then
+                CreateInfoButton(Dropdown, DropdownSettings.Info, Dropdown.Title)
+            end
+
+            -- Pin button (Pinnable)
+            if DropdownSettings.Pinnable then
+                CreatePinButton(Dropdown, DropdownSettings.Name)
+            end
 
             for _, ununusedoption in ipairs(Dropdown.List:GetChildren()) do
                 if ununusedoption.ClassName == "Frame" and ununusedoption.Name ~= 'PlaceHolder' and ununusedoption.Name ~= "-SearchBar" then
@@ -2618,7 +3772,7 @@ function RayfieldLibrary:CreateWindow(Settings)
                     TweenService:Create(Dropdown, TweenInfo.new(0.5, Enum.EasingStyle.Quint),
                         { Size = UDim2.new(1, -10, 0, 45) }):Play()
                     for _, DropdownOpt in ipairs(Dropdown.List:GetChildren()) do
-                        if DropdownOpt.ClassName == "Frame" and DropdownOpt.Name ~= "PlaceHolder" and DropdownOpt ~= SearchBar then
+                        if DropdownOpt.ClassName == "Frame" and DropdownOpt.Name ~= "PlaceHolder" and DropdownOpt ~= SearchBar and DropdownOpt.Name ~= "-AddInput" then
                             TweenService:Create(DropdownOpt, TweenInfo.new(0.3, Enum.EasingStyle.Quint),
                                 { BackgroundTransparency = 1 }):Play()
                             TweenService:Create(DropdownOpt.UIStroke, TweenInfo.new(0.3, Enum.EasingStyle.Quint),
@@ -2643,7 +3797,7 @@ function RayfieldLibrary:CreateWindow(Settings)
                     TweenService:Create(Dropdown.Toggle, TweenInfo.new(0.7, Enum.EasingStyle.Quint), { Rotation = 0 })
                         :Play()
                     for _, DropdownOpt in ipairs(Dropdown.List:GetChildren()) do
-                        if DropdownOpt.ClassName == "Frame" and DropdownOpt.Name ~= "PlaceHolder" and DropdownOpt ~= SearchBar then
+                        if DropdownOpt.ClassName == "Frame" and DropdownOpt.Name ~= "PlaceHolder" and DropdownOpt ~= SearchBar and DropdownOpt.Name ~= "-AddInput" then
                             TweenService:Create(DropdownOpt, TweenInfo.new(0.3, Enum.EasingStyle.Quint),
                                 { BackgroundTransparency = 0 }):Play()
                             TweenService:Create(DropdownOpt.UIStroke, TweenInfo.new(0.3, Enum.EasingStyle.Quint),
@@ -2657,7 +3811,7 @@ function RayfieldLibrary:CreateWindow(Settings)
             SearchBar.Input:GetPropertyChangedSignal('Text'):Connect(function()
                 local InputText = string.upper(SearchBar.Input.Text)
                 for _, item in ipairs(Dropdown.List:GetChildren()) do
-                    if item:IsA('Frame') and item.Name ~= 'Template' and item ~= SearchBar and item.Name ~= 'PlaceHolder' then
+                    if item:IsA('Frame') and item.Name ~= 'Template' and item ~= SearchBar and item.Name ~= 'PlaceHolder' and item.Name ~= '-AddInput' then
                         if InputText == "" or InputText == " " or string.find(string.upper(item.Name), InputText) ~= nil then
                             TweenService:Create(item, TweenInfo.new(0.3, Enum.EasingStyle.Quint),
                                 { BackgroundTransparency = 0 }):Play()
@@ -2762,7 +3916,7 @@ function RayfieldLibrary:CreateWindow(Settings)
                     end
 
                     for _, droption in ipairs(Dropdown.List:GetChildren()) do
-                        if droption.ClassName == "Frame" and droption.Name ~= "Placeholder" and droption ~= SearchBar and not table.find(DropdownSettings.CurrentOption, droption.Name) then
+                        if droption.ClassName == "Frame" and droption.Name ~= "Placeholder" and droption ~= SearchBar and droption.Name ~= "-AddInput" and not table.find(DropdownSettings.CurrentOption, droption.Name) then
                             TweenService:Create(droption, TweenInfo.new(0.3, Enum.EasingStyle.Quint),
                                 { BackgroundColor3 = Color3.fromRGB(30, 30, 30) }):Play()
                         end
@@ -2772,7 +3926,7 @@ function RayfieldLibrary:CreateWindow(Settings)
                         TweenService:Create(Dropdown, TweenInfo.new(0.5, Enum.EasingStyle.Quint),
                             { Size = UDim2.new(1, -10, 0, 45) }):Play()
                         for _, DropdownOpt in ipairs(Dropdown.List:GetChildren()) do
-                            if DropdownOpt.ClassName == "Frame" and DropdownOpt.Name ~= "PlaceHolder" and DropdownOpt ~= SearchBar then
+                            if DropdownOpt.ClassName == "Frame" and DropdownOpt.Name ~= "PlaceHolder" and DropdownOpt ~= SearchBar and DropdownOpt.Name ~= "-AddInput" then
                                 TweenService:Create(DropdownOpt, TweenInfo.new(0.3, Enum.EasingStyle.Quint),
                                     { BackgroundTransparency = 1 }):Play()
                                 TweenService:Create(DropdownOpt.UIStroke, TweenInfo.new(0.3, Enum.EasingStyle.Quint),
@@ -2794,13 +3948,135 @@ function RayfieldLibrary:CreateWindow(Settings)
             end
 
             for _, droption in ipairs(Dropdown.List:GetChildren()) do
-                if droption.ClassName == "Frame" and droption.Name ~= "Placeholder" and droption ~= SearchBar then
+                if droption.ClassName == "Frame" and droption.Name ~= "Placeholder" and droption ~= SearchBar and droption.Name ~= "-AddInput" then
                     if not table.find(DropdownSettings.CurrentOption, droption.Name) then
                         droption.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
                     else
                         droption.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
                     end
                 end
+            end
+
+            -- Custom Input for adding new options to the Dropdown
+            if DropdownSettings.CustomInput then
+                local AddInputBar = SearchBar:Clone()
+                AddInputBar.Name = "-AddInput"
+                AddInputBar.LayoutOrder = -999999
+                AddInputBar.Parent = Dropdown.List
+                AddInputBar.Visible = true
+                AddInputBar.Input.PlaceholderText = DropdownSettings.CustomInputPlaceholder or
+                "Type and press Enter to add..."
+                AddInputBar.Input.Text = ""
+
+                AddInputBar.Input.FocusLost:Connect(function(enterPressed)
+                    if not enterPressed then return end
+                    local newOptionName = AddInputBar.Input.Text
+                    AddInputBar.Input.Text = ""
+                    if newOptionName == "" or newOptionName == " " then return end
+
+                    -- Check if option already exists
+                    if table.find(DropdownSettings.Options, newOptionName) then return end
+
+                    -- Add to the options list
+                    table.insert(DropdownSettings.Options, newOptionName)
+
+                    -- Create the visual option element
+                    local DropdownOption = Elements.Template.Dropdown.List.Template:Clone()
+                    DropdownOption:GetPropertyChangedSignal('BackgroundTransparency'):Connect(function()
+                        if DropdownOption.BackgroundTransparency == 1 then
+                            DropdownOption.Visible = false
+                        else
+                            DropdownOption.Visible = true
+                        end
+                    end)
+                    DropdownOption.Name = newOptionName
+                    DropdownOption.Title.Text = newOptionName
+                    DropdownOption.Parent = Dropdown.List
+                    DropdownOption.Visible = true
+                    DropdownOption.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+                    DropdownOption.BackgroundTransparency = 0
+                    DropdownOption.UIStroke.Transparency = 0
+                    DropdownOption.Title.TextTransparency = 0
+
+                    DropdownOption.Interact.ZIndex = 50
+                    DropdownOption.Interact.MouseButton1Click:Connect(function()
+                        if not DropdownSettings.MultipleOptions and table.find(DropdownSettings.CurrentOption, newOptionName) then
+                            return
+                        end
+
+                        if table.find(DropdownSettings.CurrentOption, newOptionName) then
+                            table.remove(DropdownSettings.CurrentOption,
+                                table.find(DropdownSettings.CurrentOption, newOptionName))
+                            Refresh()
+                        else
+                            if not DropdownSettings.MultipleOptions then
+                                table.clear(DropdownSettings.CurrentOption)
+                            end
+                            table.insert(DropdownSettings.CurrentOption, newOptionName)
+                            Refresh()
+                            TweenService:Create(DropdownOption.UIStroke, TweenInfo.new(0.3, Enum.EasingStyle.Quint),
+                                { Transparency = 1 }):Play()
+                            TweenService:Create(DropdownOption, TweenInfo.new(0.3, Enum.EasingStyle.Quint),
+                                { BackgroundColor3 = Color3.fromRGB(40, 40, 40) }):Play()
+                            Debounce = true
+                            wait(0.2)
+                            TweenService:Create(DropdownOption.UIStroke, TweenInfo.new(0.3, Enum.EasingStyle.Quint),
+                                { Transparency = 0 }):Play()
+                        end
+
+                        if Settings.ConfigurationSaving and Settings.ConfigurationSaving.Enabled and DropdownSettings.Flag then
+                            RayfieldLibrary:_ConfigSet(DropdownSettings.Flag, DropdownSettings.CurrentOption)
+                        end
+
+                        local Success, Response = pcall(function()
+                            DropdownSettings.Callback(DropdownSettings.CurrentOption)
+                        end)
+
+                        if not Success then
+                            TweenService:Create(Dropdown, TweenInfo.new(0.6, Enum.EasingStyle.Quint),
+                                { BackgroundColor3 = Color3.fromRGB(85, 0, 0) }):Play()
+                            TweenService:Create(Dropdown.UIStroke, TweenInfo.new(0.6, Enum.EasingStyle.Quint),
+                                { Transparency = 1 }):Play()
+                            Dropdown.Title.Text = "Callback Error"
+                            print("Rayfield | " .. DropdownSettings.Name .. " Callback Error " .. tostring(Response))
+                            wait(0.5)
+                            Dropdown.Title.Text = DropdownSettings.Name
+                            TweenService:Create(Dropdown, TweenInfo.new(0.6, Enum.EasingStyle.Quint),
+                                { BackgroundColor3 = SelectedTheme.ElementBackground }):Play()
+                            TweenService:Create(Dropdown.UIStroke, TweenInfo.new(0.6, Enum.EasingStyle.Quint),
+                                { Transparency = 0 }):Play()
+                        end
+
+                        for _, droption in ipairs(Dropdown.List:GetChildren()) do
+                            if droption.ClassName == "Frame" and droption.Name ~= "Placeholder" and droption ~= SearchBar and droption.Name ~= "-AddInput" and not table.find(DropdownSettings.CurrentOption, droption.Name) then
+                                TweenService:Create(droption, TweenInfo.new(0.3, Enum.EasingStyle.Quint),
+                                    { BackgroundColor3 = Color3.fromRGB(30, 30, 30) }):Play()
+                            end
+                        end
+                        if not DropdownSettings.MultipleOptions then
+                            wait(0.1)
+                            TweenService:Create(Dropdown, TweenInfo.new(0.5, Enum.EasingStyle.Quint),
+                                { Size = UDim2.new(1, -10, 0, 45) }):Play()
+                            for _, DropdownOpt in ipairs(Dropdown.List:GetChildren()) do
+                                if DropdownOpt.ClassName == "Frame" and DropdownOpt.Name ~= "PlaceHolder" and DropdownOpt ~= SearchBar and DropdownOpt.Name ~= "-AddInput" then
+                                    TweenService:Create(DropdownOpt, TweenInfo.new(0.3, Enum.EasingStyle.Quint),
+                                        { BackgroundTransparency = 1 }):Play()
+                                    TweenService:Create(DropdownOpt.UIStroke, TweenInfo.new(0.3, Enum.EasingStyle.Quint),
+                                        { Transparency = 1 }):Play()
+                                    TweenService:Create(DropdownOpt.Title, TweenInfo.new(0.3, Enum.EasingStyle.Quint),
+                                        { TextTransparency = 1 }):Play()
+                                end
+                            end
+                            TweenService:Create(Dropdown.List, TweenInfo.new(0.3, Enum.EasingStyle.Quint),
+                                { ScrollBarImageTransparency = 1 }):Play()
+                            TweenService:Create(Dropdown.Toggle, TweenInfo.new(0.7, Enum.EasingStyle.Quint),
+                                { Rotation = 180 }):Play()
+                            wait(0.35)
+                            Dropdown.List.Visible = false
+                        end
+                        Debounce = false
+                    end)
+                end)
             end
 
             function DropdownSettings:Set(NewOption)
@@ -2842,7 +4118,7 @@ function RayfieldLibrary:CreateWindow(Settings)
                 end
 
                 for _, droption in ipairs(Dropdown.List:GetChildren()) do
-                    if droption.ClassName == "Frame" and droption.Name ~= "Placeholder" then
+                    if droption.ClassName == "Frame" and droption.Name ~= "Placeholder" and droption.Name ~= "-AddInput" then
                         if not table.find(DropdownSettings.CurrentOption, droption.Name) then
                             droption.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
                         else
@@ -2858,7 +4134,7 @@ function RayfieldLibrary:CreateWindow(Settings)
 
                 -- Clear current options
                 for _, child in ipairs(Dropdown.List:GetChildren()) do
-                    if child.ClassName == "Frame" and child.Name ~= "PlaceHolder" and child.Name ~= "-SearchBar" then
+                    if child.ClassName == "Frame" and child.Name ~= "PlaceHolder" and child.Name ~= "-SearchBar" and child.Name ~= "-AddInput" then
                         child:Destroy()
                     end
                 end
@@ -2952,7 +4228,7 @@ function RayfieldLibrary:CreateWindow(Settings)
                         end
 
                         for _, droption in ipairs(Dropdown.List:GetChildren()) do
-                            if droption.ClassName == "Frame" and droption.Name ~= "Placeholder" and droption.Name ~= "-SearchBar" and not table.find(DropdownSettings.CurrentOption, droption.Name) then
+                            if droption.ClassName == "Frame" and droption.Name ~= "Placeholder" and droption.Name ~= "-SearchBar" and droption.Name ~= "-AddInput" and not table.find(DropdownSettings.CurrentOption, droption.Name) then
                                 TweenService:Create(droption, TweenInfo.new(0.3, Enum.EasingStyle.Quint),
                                     { BackgroundColor3 = Color3.fromRGB(30, 30, 30) }):Play()
                             end
@@ -2962,7 +4238,7 @@ function RayfieldLibrary:CreateWindow(Settings)
                             TweenService:Create(Dropdown, TweenInfo.new(0.5, Enum.EasingStyle.Quint),
                                 { Size = UDim2.new(1, -10, 0, 45) }):Play()
                             for _, DropdownOpt in ipairs(Dropdown.List:GetChildren()) do
-                                if DropdownOpt.ClassName == "Frame" and DropdownOpt.Name ~= "PlaceHolder" and DropdownOpt.Name ~= "-SearchBar" then
+                                if DropdownOpt.ClassName == "Frame" and DropdownOpt.Name ~= "PlaceHolder" and DropdownOpt.Name ~= "-SearchBar" and DropdownOpt.Name ~= "-AddInput" then
                                     TweenService:Create(DropdownOpt, TweenInfo.new(0.3, Enum.EasingStyle.Quint),
                                         { BackgroundTransparency = 1 }):Play()
                                     TweenService:Create(DropdownOpt.UIStroke, TweenInfo.new(0.3, Enum.EasingStyle.Quint),
@@ -2987,7 +4263,7 @@ function RayfieldLibrary:CreateWindow(Settings)
                 SearchBar.Input:GetPropertyChangedSignal('Text'):Connect(function()
                     local InputText = string.upper(SearchBar.Input.Text)
                     for _, item in ipairs(Dropdown.List:GetChildren()) do
-                        if item:IsA('Frame') and item.Name ~= 'Template' and item.Name ~= '-SearchBar' and item.Name ~= 'PlaceHolder' then
+                        if item:IsA('Frame') and item.Name ~= 'Template' and item.Name ~= '-SearchBar' and item.Name ~= 'PlaceHolder' and item.Name ~= '-AddInput' then
                             if InputText == "" or InputText == " " or string.find(string.upper(item.Name), InputText) ~= nil then
                                 TweenService:Create(item, TweenInfo.new(0.3, Enum.EasingStyle.Quint),
                                     { BackgroundTransparency = 0 }):Play()
@@ -3027,7 +4303,7 @@ function RayfieldLibrary:CreateWindow(Settings)
                 TweenService:Create(Dropdown, TweenInfo.new(0.5, Enum.EasingStyle.Quint),
                     { Size = UDim2.new(0, 465, 0, 44) }):Play()
                 for _, DropdownOpt in ipairs(Dropdown.List:GetChildren()) do
-                    if DropdownOpt.ClassName == "Frame" and DropdownOpt.Name ~= "PlaceHolder" and DropdownOpt ~= SearchBar then
+                    if DropdownOpt.ClassName == "Frame" and DropdownOpt.Name ~= "PlaceHolder" and DropdownOpt ~= SearchBar and DropdownOpt.Name ~= "-AddInput" then
                         TweenService:Create(DropdownOpt, TweenInfo.new(0.3, Enum.EasingStyle.Quint),
                             { BackgroundTransparency = 1 }):Play()
                         TweenService:Create(DropdownOpt.UIStroke, TweenInfo.new(0.3, Enum.EasingStyle.Quint),
@@ -3114,6 +4390,16 @@ function RayfieldLibrary:CreateWindow(Settings)
             TweenService:Create(Keybind.UIStroke, TweenInfo.new(0.7, Enum.EasingStyle.Quint), { Transparency = 0 }):Play()
             TweenService:Create(Keybind.Title, TweenInfo.new(0.7, Enum.EasingStyle.Quint), { TextTransparency = 0 })
                 :Play()
+
+            -- Info tooltip
+            if KeybindSettings.Info then
+                CreateInfoButton(Keybind, KeybindSettings.Info, Keybind.Title)
+            end
+
+            -- Pin button (Pinnable)
+            if KeybindSettings.Pinnable then
+                CreatePinButton(Keybind, KeybindSettings.Name)
+            end
 
             if Settings.ConfigurationSaving and Settings.ConfigurationSaving.Enabled and KeybindSettings.Flag then
                 local storedKey = RayfieldLibrary:_ConfigGet(KeybindSettings.Flag)
@@ -3314,6 +4600,15 @@ function RayfieldLibrary:CreateWindow(Settings)
             TweenService:Create(Toggle.UIStroke, TweenInfo.new(0.7, Enum.EasingStyle.Quint), { Transparency = 0 }):Play()
             TweenService:Create(Toggle.Title, TweenInfo.new(0.7, Enum.EasingStyle.Quint), { TextTransparency = 0 }):Play()
 
+            -- Info tooltip
+            if ToggleSettings.Info then
+                CreateInfoButton(Toggle, ToggleSettings.Info, Toggle.Title)
+            end
+
+            -- Pin button (Pinnable)
+            if ToggleSettings.Pinnable then
+                CreatePinButton(Toggle, ToggleSettings.Name)
+            end
 
             if not ToggleSettings.CurrentValue then
                 Toggle.Switch.Indicator.Position = UDim2.new(1, -40, 0.5, 0)
@@ -3602,11 +4897,22 @@ function RayfieldLibrary:CreateWindow(Settings)
             ColorPicker.HexInput.Position     = UDim2.new(0, 17, 0, 90)
             Main.ImageTransparency            = 1
             Background.BackgroundTransparency = 1
-            local opened                      = false
-            local mouse                       = game.Players.LocalPlayer:GetMouse()
-            Main.Image                        = "http://www.roblox.com/asset/?id=11415645739"
-            local mainDragging                = false
-            local sliderDragging              = false
+
+            -- Info tooltip
+            if ColorPickerSettings.Info then
+                CreateInfoButton(ColorPicker, ColorPickerSettings.Info, ColorPicker.Title)
+            end
+
+            -- Pin button (Pinnable)
+            if ColorPickerSettings.Pinnable then
+                CreatePinButton(ColorPicker, ColorPickerSettings.Name)
+            end
+
+            local opened         = false
+            local mouse          = game.Players.LocalPlayer:GetMouse()
+            Main.Image           = "http://www.roblox.com/asset/?id=11415645739"
+            local mainDragging   = false
+            local sliderDragging = false
             ColorPicker.Interact.MouseButton1Down:Connect(function()
                 if ColorPickerSettings.Locked then return end
                 if not opened then
@@ -4001,6 +5307,16 @@ function RayfieldLibrary:CreateWindow(Settings)
             TweenService:Create(Slider.UIStroke, TweenInfo.new(0.7, Enum.EasingStyle.Quint), { Transparency = 0 }):Play()
             TweenService:Create(Slider.Title, TweenInfo.new(0.7, Enum.EasingStyle.Quint), { TextTransparency = 0 }):Play()
 
+            -- Info tooltip
+            if SliderSettings.Info then
+                CreateInfoButton(Slider, SliderSettings.Info, Slider.Title)
+            end
+
+            -- Pin button (Pinnable)
+            if SliderSettings.Pinnable then
+                CreatePinButton(Slider, SliderSettings.Name)
+            end
+
             Slider.Main.Progress.Size = UDim2.new(0,
                 Slider.Main.AbsoluteSize.X *
                 ((SliderSettings.CurrentValue + SliderSettings.Range[1]) / (SliderSettings.Range[2] - SliderSettings.Range[1])) >
@@ -4194,6 +5510,1022 @@ function RayfieldLibrary:CreateWindow(Settings)
                 end
             end
             return SliderSettings
+        end
+
+        -- Priority List
+        function Tab:CreatePriority(PrioritySettings)
+            PrioritySettings.Locked = false
+            if Settings.ConfigurationSaving and Settings.ConfigurationSaving.Enabled and not PrioritySettings.Flag then
+                PrioritySettings.Flag = PrioritySettings.Name
+            end
+
+            -- AllowAdd/AllowRemove controls
+            local allowAdd = true
+            local allowRemove = true
+            if PrioritySettings.AllowAddRemove == false then
+                allowAdd = false
+                allowRemove = false
+            end
+            if PrioritySettings.AllowAdd == false then allowAdd = false end
+            if PrioritySettings.AllowRemove == false then allowRemove = false end
+            local valueType = PrioritySettings.ValueType or "text"
+            local valueOptions = PrioritySettings.ValueOptions or {}
+
+            -- Initialize items from settings
+            local currentItems = {}
+            if PrioritySettings.Items then
+                for _, item in ipairs(PrioritySettings.Items) do
+                    table.insert(currentItems, { Name = item.Name, Value = item.Value or "" })
+                end
+            end
+
+            -- Load from saved config if available
+            if Settings.ConfigurationSaving and Settings.ConfigurationSaving.Enabled and PrioritySettings.Flag then
+                local stored = RayfieldLibrary:_ConfigGet(PrioritySettings.Flag)
+                if type(stored) == "table" and #stored > 0 then
+                    currentItems = {}
+                    for _, item in ipairs(stored) do
+                        if type(item) == "table" and item.Name then
+                            table.insert(currentItems, { Name = item.Name, Value = item.Value or "" })
+                        end
+                    end
+                end
+            end
+
+            local isExpanded = false
+            local itemFrames = {} -- Array of {frame = Frame, data = {Name, Value}}
+            local localDebounce = false
+
+            -- ===== MAIN FRAME =====
+            local Priority = Instance.new("Frame")
+            Priority.Name = PrioritySettings.Name or "Priority"
+            Priority.Size = UDim2.new(1, -10, 0, 45)
+            Priority.BackgroundColor3 = SelectedTheme.ElementBackground
+            Priority.BorderSizePixel = 0
+            Priority.ClipsDescendants = true
+            Priority.Visible = true
+
+            local pCorner = Instance.new("UICorner")
+            pCorner.CornerRadius = UDim.new(0, 5)
+            pCorner.Parent = Priority
+
+            -- Named "UIStroke" so section collapse/expand can find it
+            local pStroke = Instance.new("UIStroke")
+            pStroke.Name = "UIStroke"
+            pStroke.Color = SelectedTheme.ElementStroke
+            pStroke.Thickness = 1.2
+            pStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+            pStroke.Parent = Priority
+
+            -- Named "Title" so section collapse/expand can find it
+            local titleLabel = Instance.new("TextLabel")
+            titleLabel.Name = "Title"
+            titleLabel.Text = PrioritySettings.Name
+            titleLabel.Font = Enum.Font.GothamBold
+            titleLabel.TextSize = 13
+            titleLabel.TextColor3 = SelectedTheme.TextColor
+            titleLabel.TextXAlignment = Enum.TextXAlignment.Left
+            titleLabel.BackgroundTransparency = 1
+            titleLabel.Position = UDim2.new(0, 12, 0, 0)
+            titleLabel.Size = UDim2.new(1, -80, 0, 45)
+            titleLabel.Parent = Priority
+
+            -- Optional icon
+            if PrioritySettings.Icon then
+                local pIcon = Instance.new("ImageLabel")
+                pIcon.Name = "Icon"
+                pIcon.BackgroundTransparency = 1
+                pIcon.Position = UDim2.new(0, 12, 0, 12)
+                pIcon.Size = UDim2.new(0, 20, 0, 20)
+                pIcon.ImageColor3 = SelectedTheme.TextColor
+                pIcon.Parent = Priority
+                RayfieldLibrary:_ApplyIcon(pIcon, PrioritySettings.Icon)
+                titleLabel.Position = UDim2.new(0, 40, 0, 0)
+            end
+
+            -- Item count
+            local countLabel = Instance.new("TextLabel")
+            countLabel.Name = "Count"
+            countLabel.Text = #currentItems .. " items"
+            countLabel.Font = Enum.Font.Gotham
+            countLabel.TextSize = 11
+            countLabel.TextColor3 = Color3.fromRGB(150, 150, 150)
+            countLabel.TextXAlignment = Enum.TextXAlignment.Right
+            countLabel.BackgroundTransparency = 1
+            countLabel.Position = UDim2.new(1, -65, 0, 0)
+            countLabel.Size = UDim2.new(0, 45, 0, 45)
+            countLabel.Parent = Priority
+
+            -- Toggle chevron (text-based for maximum compatibility)
+            local toggleArrow = Instance.new("TextLabel")
+            toggleArrow.Name = "Toggle"
+            toggleArrow.Text = utf8.char(9660) -- down arrow
+            toggleArrow.Font = Enum.Font.GothamBold
+            toggleArrow.TextSize = 10
+            toggleArrow.TextColor3 = Color3.fromRGB(150, 150, 150)
+            toggleArrow.BackgroundTransparency = 1
+            toggleArrow.Position = UDim2.new(1, -20, 0, 0)
+            toggleArrow.Size = UDim2.new(0, 14, 0, 45)
+            toggleArrow.Rotation = 180
+            toggleArrow.Parent = Priority
+
+            -- Transparent click area for expand/collapse
+            local interact = Instance.new("TextButton")
+            interact.Name = "Interact"
+            interact.Text = ""
+            interact.BackgroundTransparency = 1
+            interact.Size = UDim2.new(1, 0, 0, 45)
+            interact.ZIndex = 10
+            interact.Parent = Priority
+
+            -- ===== CONTAINER (holds search, item list, add row) =====
+            local container = Instance.new("Frame")
+            container.Name = "Container"
+            container.BackgroundTransparency = 1
+            container.BorderSizePixel = 0
+            container.Position = UDim2.new(0, 5, 0, 48)
+            container.Size = UDim2.new(1, -10, 0, 600)
+            container.Parent = Priority
+
+            -- === SEARCH BAR ===
+            local searchRow = Instance.new("Frame")
+            searchRow.Name = "SearchRow"
+            searchRow.Size = UDim2.new(1, 0, 0, 28)
+            searchRow.Position = UDim2.new(0, 0, 0, 0)
+            searchRow.BackgroundColor3 = SelectedTheme.InputBackground
+            searchRow.BorderSizePixel = 0
+            searchRow.Parent = container
+
+            Instance.new("UICorner", searchRow).CornerRadius = UDim.new(0, 4)
+
+            local srStroke = Instance.new("UIStroke")
+            srStroke.Color = SelectedTheme.InputStroke
+            srStroke.Thickness = 1
+            srStroke.Parent = searchRow
+
+            local searchInput = Instance.new("TextBox")
+            searchInput.Name = "SearchInput"
+            searchInput.PlaceholderText = "Search items..."
+            searchInput.PlaceholderColor3 = SelectedTheme.PlaceholderColor
+            searchInput.Text = ""
+            searchInput.Font = Enum.Font.Gotham
+            searchInput.TextSize = 12
+            searchInput.TextColor3 = SelectedTheme.TextColor
+            searchInput.TextXAlignment = Enum.TextXAlignment.Left
+            searchInput.BackgroundTransparency = 1
+            searchInput.Position = UDim2.new(0, 8, 0, 0)
+            searchInput.Size = UDim2.new(1, -16, 1, 0)
+            searchInput.ClearTextOnFocus = false
+            searchInput.Parent = searchRow
+
+            -- === SCROLLABLE ITEM LIST ===
+            local itemList = Instance.new("ScrollingFrame")
+            itemList.Name = "ItemList"
+            itemList.Position = UDim2.new(0, 0, 0, 32)
+            itemList.Size = UDim2.new(1, 0, 0, 70)
+            itemList.BackgroundTransparency = 1
+            itemList.BorderSizePixel = 0
+            itemList.ScrollBarThickness = 3
+            itemList.ScrollBarImageTransparency = 0.3
+            itemList.AutomaticCanvasSize = Enum.AutomaticSize.Y
+            itemList.CanvasSize = UDim2.new(0, 0, 0, 0)
+            itemList.Parent = container
+
+            local ilLayout = Instance.new("UIListLayout")
+            ilLayout.SortOrder = Enum.SortOrder.LayoutOrder
+            ilLayout.Padding = UDim.new(0, 3)
+            ilLayout.Parent = itemList
+
+            local ilPadding = Instance.new("UIPadding")
+            ilPadding.PaddingTop = UDim.new(0, 2)
+            ilPadding.PaddingBottom = UDim.new(0, 2)
+            ilPadding.Parent = itemList
+
+            -- === ADD ROW ===
+            local addRow = Instance.new("Frame")
+            addRow.Name = "AddRow"
+            addRow.Position = UDim2.new(0, 0, 0, 0)
+            addRow.Size = UDim2.new(1, 0, 0, 28)
+            addRow.BackgroundColor3 = SelectedTheme.InputBackground
+            addRow.BorderSizePixel = 0
+            addRow.Visible = allowAdd
+            addRow.Parent = container
+
+            local arCorner = Instance.new("UICorner")
+            arCorner.CornerRadius = UDim.new(0, 4)
+            arCorner.Parent = addRow
+
+            local arStroke = Instance.new("UIStroke")
+            arStroke.Color = SelectedTheme.InputStroke
+            arStroke.Thickness = 1
+            arStroke.Parent = addRow
+
+            local addNameInput = Instance.new("TextBox")
+            addNameInput.Name = "NameInput"
+            addNameInput.PlaceholderText = PrioritySettings.Placeholder or "Item name..."
+            addNameInput.PlaceholderColor3 = SelectedTheme.PlaceholderColor
+            addNameInput.Text = ""
+            addNameInput.Font = Enum.Font.Gotham
+            addNameInput.TextSize = 11
+            addNameInput.TextColor3 = SelectedTheme.TextColor
+            addNameInput.TextXAlignment = Enum.TextXAlignment.Left
+            addNameInput.BackgroundTransparency = 1
+            addNameInput.Position = UDim2.new(0, 8, 0, 0)
+            addNameInput.Size = UDim2.new(0.45, -12, 1, 0)
+            addNameInput.ClearTextOnFocus = false
+            addNameInput.Parent = addRow
+
+            local addSep = Instance.new("Frame")
+            addSep.Size = UDim2.new(0, 1, 0, 18)
+            addSep.Position = UDim2.new(0.45, 0, 0, 5)
+            addSep.BackgroundColor3 = SelectedTheme.InputStroke
+            addSep.BorderSizePixel = 0
+            addSep.Parent = addRow
+
+            local addValueInput = Instance.new("TextBox")
+            addValueInput.Name = "ValueInput"
+            addValueInput.PlaceholderText = PrioritySettings.ValuePlaceholder or "Value..."
+            addValueInput.PlaceholderColor3 = SelectedTheme.PlaceholderColor
+            addValueInput.Text = ""
+            addValueInput.Font = Enum.Font.Gotham
+            addValueInput.TextSize = 11
+            addValueInput.TextColor3 = SelectedTheme.TextColor
+            addValueInput.TextXAlignment = Enum.TextXAlignment.Left
+            addValueInput.BackgroundTransparency = 1
+            addValueInput.Position = UDim2.new(0.45, 6, 0, 0)
+            addValueInput.Size = UDim2.new(0.4, -6, 1, 0)
+            addValueInput.ClearTextOnFocus = false
+            addValueInput.Parent = addRow
+
+            local addBtn = Instance.new("TextButton")
+            addBtn.Name = "AddButton"
+            addBtn.Text = "+"
+            addBtn.Font = Enum.Font.GothamBold
+            addBtn.TextSize = 16
+            addBtn.TextColor3 = Color3.fromRGB(100, 200, 100)
+            addBtn.BackgroundColor3 = Color3.fromRGB(35, 55, 35)
+            addBtn.BorderSizePixel = 0
+            addBtn.Position = UDim2.new(1, -26, 0, 2)
+            addBtn.Size = UDim2.new(0, 24, 0, 24)
+            addBtn.ZIndex = 5
+            addBtn.Parent = addRow
+
+            Instance.new("UICorner", addBtn).CornerRadius = UDim.new(0, 4)
+
+            -- Parent element to tab/section
+            Tab.Elements[PrioritySettings.Name] = {
+                type = 'priority',
+                section = PrioritySettings.SectionParent,
+                element = Priority
+            }
+            if PrioritySettings.SectionParent and PrioritySettings.SectionParent.Holder then
+                Priority.Parent = PrioritySettings.SectionParent.Holder
+            else
+                Priority.Parent = TabPage
+            end
+
+            -- Info tooltip
+            if PrioritySettings.Info then
+                CreateInfoButton(Priority, PrioritySettings.Info, titleLabel)
+            end
+
+            -- Pin button (Pinnable)
+            if PrioritySettings.Pinnable then
+                CreatePinButton(Priority, PrioritySettings.Name)
+            end
+
+            -- ===== INTERNAL HELPERS =====
+            local function updateCount()
+                countLabel.Text = #itemFrames .. " items"
+            end
+
+            local function getOrderedItems()
+                local sorted = {}
+                for _, entry in ipairs(itemFrames) do
+                    table.insert(sorted, entry)
+                end
+                table.sort(sorted, function(a, b)
+                    return a.frame.LayoutOrder < b.frame.LayoutOrder
+                end)
+                local result = {}
+                for _, entry in ipairs(sorted) do
+                    table.insert(result, { Name = entry.data.Name, Value = entry.data.Value })
+                end
+                return result
+            end
+
+            local function saveItems()
+                currentItems = getOrderedItems()
+                updateCount()
+                if Settings.ConfigurationSaving and Settings.ConfigurationSaving.Enabled and PrioritySettings.Flag then
+                    RayfieldLibrary:_ConfigSet(PrioritySettings.Flag, currentItems)
+                end
+                if PrioritySettings.Callback then
+                    pcall(PrioritySettings.Callback, currentItems)
+                end
+            end
+
+            local function updateOrderLabels()
+                local sorted = {}
+                for _, entry in ipairs(itemFrames) do
+                    table.insert(sorted, entry)
+                end
+                table.sort(sorted, function(a, b)
+                    return a.frame.LayoutOrder < b.frame.LayoutOrder
+                end)
+                for i, entry in ipairs(sorted) do
+                    local lbl = entry.frame:FindFirstChild("OrderLabel")
+                    if lbl then
+                        lbl.Text = "#" .. i
+                    end
+                end
+            end
+
+            local function reorderItemTo(targetEntry, targetOrder)
+                local currentOrder = targetEntry.frame.LayoutOrder
+                if targetOrder == currentOrder then return end
+                if targetOrder > currentOrder then
+                    for _, e in ipairs(itemFrames) do
+                        if e ~= targetEntry and e.frame.LayoutOrder > currentOrder and e.frame.LayoutOrder <= targetOrder then
+                            e.frame.LayoutOrder = e.frame.LayoutOrder - 1
+                        end
+                    end
+                else
+                    for _, e in ipairs(itemFrames) do
+                        if e ~= targetEntry and e.frame.LayoutOrder >= targetOrder and e.frame.LayoutOrder < currentOrder then
+                            e.frame.LayoutOrder = e.frame.LayoutOrder + 1
+                        end
+                    end
+                end
+                targetEntry.frame.LayoutOrder = targetOrder
+                updateOrderLabels()
+            end
+
+            local function calculateExpandedHeight()
+                local listHeight = math.clamp(#itemFrames * 35, 70, 200)
+                local addRowHeight = allowAdd and 36 or 4
+                return 45 + 4 + 28 + 4 + listHeight + addRowHeight + 8
+            end
+
+            local function updateLayout()
+                local listHeight = math.clamp(#itemFrames * 35, 70, 200)
+                itemList.Size = UDim2.new(1, 0, 0, listHeight)
+                addRow.Position = UDim2.new(0, 0, 0, 32 + listHeight + 4)
+            end
+
+            local function updateExpandedSize()
+                if not isExpanded then return end
+                updateLayout()
+                local h = calculateExpandedHeight()
+                TweenService:Create(Priority, TweenInfo.new(0.3, Enum.EasingStyle.Quint),
+                    { Size = UDim2.new(1, -10, 0, h) }):Play()
+            end
+
+            -- ===== CREATE SINGLE ITEM ROW =====
+            local function createItemFrame(itemData, layoutOrder)
+                local itemFrame = Instance.new("Frame")
+                itemFrame.Name = "Item_" .. tostring(itemData.Name)
+                itemFrame.Size = UDim2.new(1, -2, 0, 32)
+                itemFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+                itemFrame.BorderSizePixel = 0
+                itemFrame.LayoutOrder = layoutOrder
+                itemFrame.Parent = itemList
+
+                local iCorner = Instance.new("UICorner")
+                iCorner.CornerRadius = UDim.new(0, 4)
+                iCorner.Parent = itemFrame
+
+                local iStroke = Instance.new("UIStroke")
+                iStroke.Color = Color3.fromRGB(45, 45, 45)
+                iStroke.Parent = itemFrame
+
+                -- Drag handle (text-based ":::")
+                local dragHandle = Instance.new("TextButton")
+                dragHandle.Name = "DragHandle"
+                dragHandle.Text = ":::"
+                dragHandle.Font = Enum.Font.GothamBold
+                dragHandle.TextSize = 14
+                dragHandle.TextColor3 = Color3.fromRGB(90, 90, 90)
+                dragHandle.BackgroundTransparency = 1
+                dragHandle.Position = UDim2.new(0, 0, 0, 0)
+                dragHandle.Size = UDim2.new(0, 24, 1, 0)
+                dragHandle.ZIndex = 6
+                dragHandle.Parent = itemFrame
+
+                -- Priority order label
+                local orderLabel = Instance.new("TextLabel")
+                orderLabel.Name = "OrderLabel"
+                orderLabel.Text = "#" .. layoutOrder
+                orderLabel.Font = Enum.Font.GothamBold
+                orderLabel.TextSize = 10
+                orderLabel.TextColor3 = Color3.fromRGB(80, 120, 180)
+                orderLabel.BackgroundTransparency = 1
+                orderLabel.Position = UDim2.new(0, 22, 0, 0)
+                orderLabel.Size = UDim2.new(0, 24, 1, 0)
+                orderLabel.Parent = itemFrame
+
+                -- Item name
+                local nameLabel = Instance.new("TextLabel")
+                nameLabel.Name = "NameLabel"
+                nameLabel.Text = itemData.Name
+                nameLabel.Font = Enum.Font.GothamMedium
+                nameLabel.TextSize = 12
+                nameLabel.TextColor3 = SelectedTheme.TextColor
+                nameLabel.TextXAlignment = Enum.TextXAlignment.Left
+                nameLabel.TextTruncate = Enum.TextTruncate.AtEnd
+                nameLabel.BackgroundTransparency = 1
+                nameLabel.Position = UDim2.new(0, 48, 0, 0)
+                nameLabel.Size = UDim2.new(0.35, -48, 1, 0)
+                nameLabel.Parent = itemFrame
+
+                -- Value frame
+                local valFrame = Instance.new("Frame")
+                valFrame.Name = "InputFrame"
+                valFrame.AnchorPoint = Vector2.new(1, 0.5)
+                valFrame.BackgroundColor3 = Color3.fromRGB(22, 22, 22)
+                valFrame.BorderSizePixel = 0
+                valFrame.Position = UDim2.new(1, allowRemove and -34 or -6, 0.5, 0)
+                valFrame.Size = UDim2.new(0, allowRemove and 130 or 155, 0, 24)
+                valFrame.ZIndex = 5
+                valFrame.Parent = itemFrame
+
+                Instance.new("UICorner", valFrame).CornerRadius = UDim.new(0, 4)
+
+                local vfStroke = Instance.new("UIStroke")
+                vfStroke.Color = Color3.fromRGB(50, 50, 50)
+                vfStroke.Parent = valFrame
+
+                local entry = { frame = itemFrame, data = itemData }
+                table.insert(itemFrames, entry)
+
+                if valueType == "dropdown" then
+                    -- Display-only text
+                    local valueDisplay = Instance.new("TextLabel")
+                    valueDisplay.Name = "InputBox"
+                    valueDisplay.AnchorPoint = Vector2.new(0, 0.5)
+                    valueDisplay.BackgroundTransparency = 1
+                    valueDisplay.Position = UDim2.new(0, 6, 0.5, 0)
+                    valueDisplay.Size = UDim2.new(1, -22, 0, 14)
+                    valueDisplay.ZIndex = 6
+                    valueDisplay.Font = Enum.Font.GothamMedium
+                    valueDisplay.Text = tostring(itemData.Value or "")
+                    valueDisplay.TextColor3 = SelectedTheme.TextColor
+                    valueDisplay.TextSize = 11
+                    valueDisplay.TextXAlignment = Enum.TextXAlignment.Left
+                    valueDisplay.TextTruncate = Enum.TextTruncate.AtEnd
+                    valueDisplay.Parent = valFrame
+
+                    -- Chevron indicator
+                    local chevron = Instance.new("TextLabel")
+                    chevron.Name = "Chevron"
+                    chevron.AnchorPoint = Vector2.new(1, 0.5)
+                    chevron.Position = UDim2.new(1, -4, 0.5, 0)
+                    chevron.Size = UDim2.new(0, 12, 0, 12)
+                    chevron.BackgroundTransparency = 1
+                    chevron.Text = utf8.char(9660)
+                    chevron.Font = Enum.Font.GothamBold
+                    chevron.TextSize = 8
+                    chevron.TextColor3 = Color3.fromRGB(150, 150, 150)
+                    chevron.ZIndex = 6
+                    chevron.Parent = valFrame
+
+                    -- Clickable overlay
+                    local inputClickArea = Instance.new("TextButton")
+                    inputClickArea.Name = "InputClickArea"
+                    inputClickArea.BackgroundTransparency = 1
+                    inputClickArea.Size = UDim2.new(1, 0, 1, 0)
+                    inputClickArea.ZIndex = 7
+                    inputClickArea.Text = ""
+                    inputClickArea.Parent = valFrame
+
+                    inputClickArea.MouseButton1Click:Connect(function()
+                        if PrioritySettings.Locked then return end
+                        local existingPopup = Rayfield:FindFirstChild("_PriorityValuePopup")
+                        if existingPopup then existingPopup:Destroy() end
+
+                        local popup = Instance.new("Frame")
+                        popup.Name = "_PriorityValuePopup"
+                        popup.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
+                        popup.BorderSizePixel = 0
+                        popup.ZIndex = 100
+                        popup.ClipsDescendants = true
+                        popup.Parent = Rayfield
+
+                        Instance.new("UICorner", popup).CornerRadius = UDim.new(0, 5)
+                        local popupStroke = Instance.new("UIStroke")
+                        popupStroke.Color = Color3.fromRGB(60, 60, 60)
+                        popupStroke.Parent = popup
+
+                        local absPos = valFrame.AbsolutePosition
+                        local absSize = valFrame.AbsoluteSize
+                        local rayfieldPos = Rayfield.AbsolutePosition
+                        local popupHeight = math.min(#valueOptions * 27 + 4, 160)
+                        popup.Position = UDim2.new(0, absPos.X - rayfieldPos.X, 0,
+                            absPos.Y - rayfieldPos.Y + absSize.Y + 2)
+                        popup.Size = UDim2.new(0, absSize.X, 0, popupHeight)
+
+                        local popupScroll = Instance.new("ScrollingFrame")
+                        popupScroll.BackgroundTransparency = 1
+                        popupScroll.Size = UDim2.new(1, 0, 1, 0)
+                        popupScroll.ScrollBarThickness = 2
+                        popupScroll.AutomaticCanvasSize = Enum.AutomaticSize.Y
+                        popupScroll.ZIndex = 101
+                        popupScroll.BorderSizePixel = 0
+                        popupScroll.Parent = popup
+
+                        local popupLayout = Instance.new("UIListLayout")
+                        popupLayout.SortOrder = Enum.SortOrder.LayoutOrder
+                        popupLayout.Padding = UDim.new(0, 1)
+                        popupLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center
+                        popupLayout.Parent = popupScroll
+
+                        local popupPad = Instance.new("UIPadding")
+                        popupPad.PaddingTop = UDim.new(0, 2)
+                        popupPad.PaddingBottom = UDim.new(0, 2)
+                        popupPad.Parent = popupScroll
+
+                        for optIdx, opt in ipairs(valueOptions) do
+                            local optBtn = Instance.new("TextButton")
+                            optBtn.Name = tostring(opt)
+                            optBtn.Text = tostring(opt)
+                            optBtn.Font = Enum.Font.GothamMedium
+                            optBtn.TextSize = 12
+                            optBtn.TextColor3 = Color3.fromRGB(220, 220, 220)
+                            optBtn.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+                            optBtn.Size = UDim2.new(0.96, 0, 0, 25)
+                            optBtn.BorderSizePixel = 0
+                            optBtn.ZIndex = 102
+                            optBtn.LayoutOrder = optIdx
+                            optBtn.Parent = popupScroll
+
+                            Instance.new("UICorner", optBtn).CornerRadius = UDim.new(0, 4)
+
+                            if tostring(opt) == tostring(itemData.Value) then
+                                optBtn.BackgroundColor3 = Color3.fromRGB(43, 105, 159)
+                            end
+
+                            optBtn.MouseEnter:Connect(function()
+                                TweenService:Create(optBtn, TweenInfo.new(0.1, Enum.EasingStyle.Quint),
+                                    { BackgroundColor3 = Color3.fromRGB(43, 105, 159) }):Play()
+                            end)
+                            optBtn.MouseLeave:Connect(function()
+                                if tostring(opt) == tostring(itemData.Value) then
+                                    TweenService:Create(optBtn, TweenInfo.new(0.1, Enum.EasingStyle.Quint),
+                                        { BackgroundColor3 = Color3.fromRGB(43, 105, 159) }):Play()
+                                else
+                                    TweenService:Create(optBtn, TweenInfo.new(0.1, Enum.EasingStyle.Quint),
+                                        { BackgroundColor3 = Color3.fromRGB(30, 30, 30) }):Play()
+                                end
+                            end)
+                            optBtn.MouseButton1Click:Connect(function()
+                                itemData.Value = tostring(opt)
+                                valueDisplay.Text = tostring(opt)
+                                popup:Destroy()
+                                saveItems()
+                            end)
+                        end
+
+                        task.defer(function()
+                            local closeConn
+                            closeConn = UserInputService.InputBegan:Connect(function(input)
+                                if input.UserInputType == Enum.UserInputType.MouseButton1
+                                    or input.UserInputType == Enum.UserInputType.Touch then
+                                    local mousePos = UserInputService:GetMouseLocation()
+                                    local pAbs = popup.AbsolutePosition
+                                    local pSize = popup.AbsoluteSize
+                                    if mousePos.X < pAbs.X or mousePos.X > pAbs.X + pSize.X
+                                        or mousePos.Y < pAbs.Y or mousePos.Y > pAbs.Y + pSize.Y then
+                                        popup:Destroy()
+                                        if closeConn then closeConn:Disconnect() end
+                                    end
+                                end
+                            end)
+                            popup.AncestryChanged:Connect(function()
+                                if not popup.Parent then
+                                    if closeConn then closeConn:Disconnect() end
+                                end
+                            end)
+                        end)
+                    end)
+                else
+                    -- Text input mode
+                    local valueInput = Instance.new("TextBox")
+                    valueInput.Name = "InputBox"
+                    valueInput.AnchorPoint = Vector2.new(0, 0.5)
+                    valueInput.BackgroundTransparency = 1
+                    valueInput.Position = UDim2.new(0, 6, 0.5, 0)
+                    valueInput.Size = UDim2.new(1, -12, 0, 14)
+                    valueInput.ZIndex = 6
+                    valueInput.ClearTextOnFocus = false
+                    valueInput.Font = Enum.Font.GothamMedium
+                    valueInput.PlaceholderColor3 = SelectedTheme.PlaceholderColor
+                    valueInput.PlaceholderText = PrioritySettings.ValuePlaceholder or "Value"
+                    valueInput.Text = tostring(itemData.Value or "")
+                    valueInput.TextColor3 = SelectedTheme.TextColor
+                    valueInput.TextSize = 11
+                    valueInput.TextXAlignment = Enum.TextXAlignment.Left
+                    valueInput.Parent = valFrame
+
+                    valueInput.FocusLost:Connect(function()
+                        itemData.Value = valueInput.Text
+                        saveItems()
+                    end)
+                end
+
+                -- Delete button (only when AllowRemove is true)
+                if allowRemove then
+                    local delBtn = Instance.new("TextButton")
+                    delBtn.Name = "DeleteButton"
+                    delBtn.Text = "X"
+                    delBtn.Font = Enum.Font.GothamBold
+                    delBtn.TextSize = 11
+                    delBtn.TextColor3 = Color3.fromRGB(200, 80, 80)
+                    delBtn.BackgroundColor3 = Color3.fromRGB(55, 28, 28)
+                    delBtn.BorderSizePixel = 0
+                    delBtn.AnchorPoint = Vector2.new(1, 0.5)
+                    delBtn.Position = UDim2.new(1, -4, 0.5, 0)
+                    delBtn.Size = UDim2.new(0, 26, 0, 24)
+                    delBtn.ZIndex = 5
+                    delBtn.Parent = itemFrame
+
+                    Instance.new("UICorner", delBtn).CornerRadius = UDim.new(0, 4)
+
+                    delBtn.MouseButton1Click:Connect(function()
+                        if PrioritySettings.Locked then return end
+                        for i, e in ipairs(itemFrames) do
+                            if e == entry then
+                                table.remove(itemFrames, i)
+                                break
+                            end
+                        end
+                        itemFrame:Destroy()
+                        local sorted = {}
+                        for _, e in ipairs(itemFrames) do table.insert(sorted, e) end
+                        table.sort(sorted, function(a, b) return a.frame.LayoutOrder < b.frame.LayoutOrder end)
+                        for i, e in ipairs(sorted) do e.frame.LayoutOrder = i end
+                        updateOrderLabels()
+                        updateExpandedSize()
+                        saveItems()
+                    end)
+
+                    delBtn.MouseEnter:Connect(function()
+                        TweenService:Create(delBtn, TweenInfo.new(0.15, Enum.EasingStyle.Quint),
+                            { BackgroundColor3 = Color3.fromRGB(75, 30, 30) }):Play()
+                    end)
+                    delBtn.MouseLeave:Connect(function()
+                        TweenService:Create(delBtn, TweenInfo.new(0.15, Enum.EasingStyle.Quint),
+                            { BackgroundColor3 = Color3.fromRGB(55, 28, 28) }):Play()
+                    end)
+                end
+
+                -- ===== DRAG AND DROP REORDERING =====
+                local isDragging = false
+                local dragConn, dragEndConn
+
+                dragHandle.MouseButton1Down:Connect(function()
+                    if PrioritySettings.Locked then return end
+                    isDragging = true
+                    local startY = UserInputService:GetMouseLocation().Y
+                    local startOrder = itemFrame.LayoutOrder
+
+                    -- Visual: highlight the dragged row
+                    itemFrame.BackgroundColor3 = Color3.fromRGB(40, 60, 90)
+                    iStroke.Color = SelectedTheme.SliderBackground
+
+                    if dragConn then dragConn:Disconnect() end
+                    if dragEndConn then dragEndConn:Disconnect() end
+
+                    dragConn = UserInputService.InputChanged:Connect(function(input)
+                        if not isDragging then return end
+                        if input.UserInputType ~= Enum.UserInputType.MouseMovement
+                            and input.UserInputType ~= Enum.UserInputType.Touch then
+                            return
+                        end
+                        local currentY = UserInputService:GetMouseLocation().Y
+                        local deltaY = currentY - startY
+                        local step = 35
+                        local moveSteps = math.floor(deltaY / step + 0.5)
+                        local newOrder = math.clamp(startOrder + moveSteps, 1, #itemFrames)
+                        if newOrder ~= itemFrame.LayoutOrder then
+                            reorderItemTo(entry, newOrder)
+                        end
+                    end)
+
+                    dragEndConn = UserInputService.InputEnded:Connect(function(endedInput)
+                        if endedInput.UserInputType == Enum.UserInputType.MouseButton1
+                            or endedInput.UserInputType == Enum.UserInputType.Touch then
+                            isDragging = false
+                            itemFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+                            iStroke.Color = Color3.fromRGB(45, 45, 45)
+                            if dragConn then
+                                dragConn:Disconnect()
+                                dragConn = nil
+                            end
+                            if dragEndConn then
+                                dragEndConn:Disconnect()
+                                dragEndConn = nil
+                            end
+                            saveItems()
+                        end
+                    end)
+                end)
+
+                -- Touch support for the drag handle
+                dragHandle.InputBegan:Connect(function(input)
+                    if input.UserInputType == Enum.UserInputType.Touch then
+                        if PrioritySettings.Locked then return end
+                        isDragging = true
+                        local startY = input.Position.Y
+                        local startOrder = itemFrame.LayoutOrder
+
+                        itemFrame.BackgroundColor3 = Color3.fromRGB(40, 60, 90)
+                        iStroke.Color = SelectedTheme.SliderBackground
+
+                        if dragConn then dragConn:Disconnect() end
+                        if dragEndConn then dragEndConn:Disconnect() end
+
+                        dragConn = UserInputService.InputChanged:Connect(function(changedInput)
+                            if not isDragging then return end
+                            if changedInput.UserInputType ~= Enum.UserInputType.Touch then return end
+                            local deltaY = changedInput.Position.Y - startY
+                            local step = 35
+                            local moveSteps = math.floor(deltaY / step + 0.5)
+                            local newOrder = math.clamp(startOrder + moveSteps, 1, #itemFrames)
+                            if newOrder ~= itemFrame.LayoutOrder then
+                                reorderItemTo(entry, newOrder)
+                            end
+                        end)
+
+                        dragEndConn = UserInputService.InputEnded:Connect(function(endedInput)
+                            if endedInput.UserInputType == Enum.UserInputType.Touch then
+                                isDragging = false
+                                itemFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+                                iStroke.Color = Color3.fromRGB(45, 45, 45)
+                                if dragConn then
+                                    dragConn:Disconnect()
+                                    dragConn = nil
+                                end
+                                if dragEndConn then
+                                    dragEndConn:Disconnect()
+                                    dragEndConn = nil
+                                end
+                                saveItems()
+                            end
+                        end)
+                    end
+                end)
+
+                -- Row hover
+                itemFrame.MouseEnter:Connect(function()
+                    if not isDragging then
+                        TweenService:Create(itemFrame, TweenInfo.new(0.15, Enum.EasingStyle.Quint),
+                            { BackgroundColor3 = Color3.fromRGB(38, 38, 38) }):Play()
+                    end
+                end)
+                itemFrame.MouseLeave:Connect(function()
+                    if not isDragging then
+                        TweenService:Create(itemFrame, TweenInfo.new(0.15, Enum.EasingStyle.Quint),
+                            { BackgroundColor3 = Color3.fromRGB(30, 30, 30) }):Play()
+                    end
+                end)
+
+                return entry
+            end
+
+            -- Build initial items
+            for i, item in ipairs(currentItems) do
+                createItemFrame(item, i)
+            end
+            updateOrderLabels()
+            updateCount()
+            updateLayout()
+
+            -- ===== EXPAND / COLLAPSE =====
+            interact.MouseButton1Click:Connect(function()
+                TweenService:Create(Priority, TweenInfo.new(0.4, Enum.EasingStyle.Quint),
+                    { BackgroundColor3 = SelectedTheme.ElementBackgroundHover }):Play()
+                TweenService:Create(pStroke, TweenInfo.new(0.4, Enum.EasingStyle.Quint), { Transparency = 1 }):Play()
+                wait(0.1)
+                TweenService:Create(Priority, TweenInfo.new(0.4, Enum.EasingStyle.Quint),
+                    { BackgroundColor3 = SelectedTheme.ElementBackground }):Play()
+                TweenService:Create(pStroke, TweenInfo.new(0.4, Enum.EasingStyle.Quint), { Transparency = 0 }):Play()
+
+                if localDebounce then return end
+
+                if isExpanded then
+                    -- Collapse
+                    localDebounce = true
+                    isExpanded = false
+                    TweenService:Create(Priority, TweenInfo.new(0.5, Enum.EasingStyle.Quint),
+                        { Size = UDim2.new(1, -10, 0, 45) }):Play()
+                    TweenService:Create(toggleArrow, TweenInfo.new(0.5, Enum.EasingStyle.Quint),
+                        { Rotation = 180 }):Play()
+                    wait(0.4)
+                    localDebounce = false
+                else
+                    -- Expand
+                    localDebounce = true
+                    isExpanded = true
+                    updateLayout()
+                    local h = calculateExpandedHeight()
+                    TweenService:Create(Priority, TweenInfo.new(0.5, Enum.EasingStyle.Quint),
+                        { Size = UDim2.new(1, -10, 0, h) }):Play()
+                    TweenService:Create(toggleArrow, TweenInfo.new(0.5, Enum.EasingStyle.Quint),
+                        { Rotation = 0 }):Play()
+                    wait(0.4)
+                    localDebounce = false
+                end
+            end)
+
+            -- ===== SEARCH FILTERING =====
+            searchInput:GetPropertyChangedSignal('Text'):Connect(function()
+                local query = string.upper(searchInput.Text)
+                for _, entry in ipairs(itemFrames) do
+                    if query == "" or query == " " or string.find(string.upper(entry.data.Name), query) ~= nil then
+                        entry.frame.Visible = true
+                    else
+                        entry.frame.Visible = false
+                    end
+                end
+            end)
+
+            -- ===== ADD NEW ITEM =====
+            if allowAdd then
+                addBtn.MouseButton1Click:Connect(function()
+                    if PrioritySettings.Locked then return end
+                    local name = addNameInput.Text
+                    local value = addValueInput.Text
+                    if name == nil or name == "" then return end
+                    for _, entry in ipairs(itemFrames) do
+                        if entry.data.Name == name then return end
+                    end
+                    local newItem = { Name = name, Value = value }
+                    createItemFrame(newItem, #itemFrames + 1)
+                    updateOrderLabels()
+                    addNameInput.Text = ""
+                    addValueInput.Text = ""
+                    updateExpandedSize()
+                    saveItems()
+                end)
+
+                addBtn.MouseEnter:Connect(function()
+                    TweenService:Create(addBtn, TweenInfo.new(0.15, Enum.EasingStyle.Quint),
+                        { BackgroundColor3 = Color3.fromRGB(45, 75, 45) }):Play()
+                end)
+                addBtn.MouseLeave:Connect(function()
+                    TweenService:Create(addBtn, TweenInfo.new(0.15, Enum.EasingStyle.Quint),
+                        { BackgroundColor3 = Color3.fromRGB(35, 55, 35) }):Play()
+                end)
+            end
+
+            -- Main frame hover
+            Priority.MouseEnter:Connect(function()
+                if not isExpanded then
+                    TweenService:Create(Priority, TweenInfo.new(0.6, Enum.EasingStyle.Quint),
+                        { BackgroundColor3 = SelectedTheme.ElementBackgroundHover }):Play()
+                end
+            end)
+            Priority.MouseLeave:Connect(function()
+                TweenService:Create(Priority, TweenInfo.new(0.6, Enum.EasingStyle.Quint),
+                    { BackgroundColor3 = SelectedTheme.ElementBackground }):Play()
+            end)
+
+            -- ===== INTRO ANIMATIONS =====
+            Priority.BackgroundTransparency = 1
+            pStroke.Transparency = 1
+            titleLabel.TextTransparency = 1
+
+            TweenService:Create(Priority, TweenInfo.new(0.7, Enum.EasingStyle.Quint),
+                { BackgroundTransparency = 0 }):Play()
+            TweenService:Create(pStroke, TweenInfo.new(0.7, Enum.EasingStyle.Quint),
+                { Transparency = 0 }):Play()
+            TweenService:Create(titleLabel, TweenInfo.new(0.7, Enum.EasingStyle.Quint),
+                { TextTransparency = 0 }):Play()
+
+            -- ===== PUBLIC API =====
+
+            -- Replace all items
+            function PrioritySettings:Set(newItems)
+                for _, entry in ipairs(itemFrames) do
+                    entry.frame:Destroy()
+                end
+                itemFrames = {}
+                currentItems = {}
+                for i, item in ipairs(newItems) do
+                    if type(item) == "table" and item.Name then
+                        table.insert(currentItems, { Name = item.Name, Value = item.Value or "" })
+                        createItemFrame(currentItems[#currentItems], i)
+                    end
+                end
+                updateOrderLabels()
+                updateExpandedSize()
+                saveItems()
+            end
+
+            -- Add a single item at the end
+            function PrioritySettings:Add(name, value)
+                if type(name) == "table" then name = name[1] end
+                if type(value) == "table" then value = value[1] end
+                name = tostring(name or "")
+                value = tostring(value or "")
+                if name == "" then return end
+                for _, entry in ipairs(itemFrames) do
+                    if entry.data.Name == name then return end
+                end
+                local newItem = { Name = name, Value = value }
+                createItemFrame(newItem, #itemFrames + 1)
+                updateOrderLabels()
+                updateExpandedSize()
+                saveItems()
+            end
+
+            -- Remove an item by name
+            function PrioritySettings:Remove(name)
+                if type(name) == "table" then name = name[1] end
+                name = tostring(name or "")
+                for i, entry in ipairs(itemFrames) do
+                    if entry.data.Name == name then
+                        entry.frame:Destroy()
+                        table.remove(itemFrames, i)
+                        break
+                    end
+                end
+                local sorted = {}
+                for _, e in ipairs(itemFrames) do table.insert(sorted, e) end
+                table.sort(sorted, function(a, b) return a.frame.LayoutOrder < b.frame.LayoutOrder end)
+                for i, e in ipairs(sorted) do e.frame.LayoutOrder = i end
+                updateOrderLabels()
+                updateExpandedSize()
+                saveItems()
+            end
+
+            -- Get the current ordered items list
+            function PrioritySettings:Get()
+                return getOrderedItems()
+            end
+
+            -- Set the value of a specific item by name
+            function PrioritySettings:SetValue(name, value)
+                if type(name) == "table" then name = name[1] end
+                if type(value) == "table" then value = value[1] end
+                name = tostring(name or "")
+                value = tostring(value or "")
+                for _, entry in ipairs(itemFrames) do
+                    if entry.data.Name == name then
+                        entry.data.Value = value
+                        local inputBox = entry.frame:FindFirstChild("InputFrame")
+                        if inputBox then
+                            local ib = inputBox:FindFirstChild("InputBox")
+                            if ib then
+                                if ib:IsA("TextBox") then
+                                    ib.Text = value
+                                elseif ib:IsA("TextLabel") then
+                                    ib.Text = value
+                                end
+                            end
+                        end
+                        saveItems()
+                        return
+                    end
+                end
+            end
+
+            -- Update the dropdown value options
+            function PrioritySettings:UpdateValueOptions(newOptions)
+                valueOptions = newOptions or {}
+            end
+
+            function PrioritySettings:Destroy()
+                local existingPopup = Rayfield:FindFirstChild("_PriorityValuePopup")
+                if existingPopup then existingPopup:Destroy() end
+                Priority:Destroy()
+            end
+
+            function PrioritySettings:Visible(bool)
+                Priority.Visible = bool
+            end
+
+            function PrioritySettings:Lock(Reason)
+                if PrioritySettings.Locked then return end
+                PrioritySettings.Locked = true
+            end
+
+            function PrioritySettings:Unlock()
+                if not PrioritySettings.Locked then return end
+                PrioritySettings.Locked = false
+            end
+
+            -- Configuration saving
+            if Settings.ConfigurationSaving then
+                if Settings.ConfigurationSaving.Enabled and PrioritySettings.Flag then
+                    RayfieldLibrary.Flags[PrioritySettings.Flag] = PrioritySettings
+                    if RayfieldLibrary:_ConfigGet(PrioritySettings.Flag) == nil then
+                        RayfieldLibrary:_ConfigSet(PrioritySettings.Flag, currentItems)
+                    end
+                end
+            end
+
+            return PrioritySettings
         end
 
         return Tab
