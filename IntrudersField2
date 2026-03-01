@@ -3896,8 +3896,13 @@ function RayfieldLibrary:CreateWindow(Settings)
                         RayfieldLibrary:_ConfigSet(DropdownSettings.Flag, DropdownSettings.CurrentOption)
                     end
 
+                    local callbackValue = DropdownSettings.CurrentOption
+                    if not DropdownSettings.MultipleOptions then
+                        callbackValue = DropdownSettings.CurrentOption[1] or ""
+                    end
+
                     local Success, Response = pcall(function()
-                        DropdownSettings.Callback(DropdownSettings.CurrentOption)
+                        DropdownSettings.Callback(callbackValue)
                     end)
 
                     if not Success then
@@ -4028,8 +4033,13 @@ function RayfieldLibrary:CreateWindow(Settings)
                             RayfieldLibrary:_ConfigSet(DropdownSettings.Flag, DropdownSettings.CurrentOption)
                         end
 
+                        local callbackValue2 = DropdownSettings.CurrentOption
+                        if not DropdownSettings.MultipleOptions then
+                            callbackValue2 = DropdownSettings.CurrentOption[1] or ""
+                        end
+
                         local Success, Response = pcall(function()
-                            DropdownSettings.Callback(DropdownSettings.CurrentOption)
+                            DropdownSettings.Callback(callbackValue2)
                         end)
 
                         if not Success then
@@ -4096,9 +4106,13 @@ function RayfieldLibrary:CreateWindow(Settings)
 
                 Refresh()
 
+                local setCallbackValue = DropdownSettings.CurrentOption
+                if not DropdownSettings.MultipleOptions then
+                    setCallbackValue = DropdownSettings.CurrentOption[1] or ""
+                end
 
                 local Success, Response = pcall(function()
-                    DropdownSettings.Callback(NewOption)
+                    DropdownSettings.Callback(setCallbackValue)
                 end)
                 if not Success then
                     TweenService:Create(Dropdown, TweenInfo.new(0.6, Enum.EasingStyle.Quint),
@@ -4208,8 +4222,13 @@ function RayfieldLibrary:CreateWindow(Settings)
                                 { Transparency = 0 }):Play()
                         end
 
+                        local callbackValue4 = DropdownSettings.CurrentOption
+                        if not DropdownSettings.MultipleOptions then
+                            callbackValue4 = DropdownSettings.CurrentOption[1] or ""
+                        end
+
                         local Success, Response = pcall(function()
-                            DropdownSettings.Callback(DropdownSettings.CurrentOption)
+                            DropdownSettings.Callback(callbackValue4)
                         end)
 
                         if not Success then
