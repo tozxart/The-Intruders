@@ -2306,7 +2306,7 @@ function Hide()
         if tab.Name ~= "Template" and tab.ClassName == "ScrollingFrame" and tab.Name ~= "Placeholder" then
             for _, element in ipairs(tab:GetChildren()) do
                 if element.ClassName == "Frame" then
-                    if element.Name ~= "SectionSpacing" and element.Name ~= "Placeholder" then
+                    if element.Name ~= "SectionSpacing" and element.Name ~= "Placeholder" and element.Name ~= "_PinGhost_" then
                         if element:FindFirstChild('Holder') then
                             TweenService:Create(element, TweenInfo.new(0.2, Enum.EasingStyle.Quint),
                                 { BackgroundTransparency = 1 }):Play()
@@ -2409,7 +2409,7 @@ function Unhide()
         if tab.Name ~= "Template" and tab.ClassName == "ScrollingFrame" and tab.Name ~= "Placeholder" then
             for _, element in ipairs(tab:GetChildren()) do
                 if element.ClassName == "Frame" then
-                    if element.Name ~= "SectionSpacing" and element.Name ~= "Placeholder" and not element:FindFirstChild('ColorPickerIs') then
+                    if element.Name ~= "SectionSpacing" and element.Name ~= "Placeholder" and element.Name ~= "_PinGhost_" and not element:FindFirstChild('ColorPickerIs') then
                         if element:FindFirstChild('_UIPadding_') then
                             TweenService:Create(element.Title, TweenInfo.new(0.3, Enum.EasingStyle.Quint),
                                 { TextTransparency = 0 }):Play()
@@ -2548,7 +2548,7 @@ function Maximise()
         if tab.Name ~= "Template" and tab.ClassName == "ScrollingFrame" and tab.Name ~= "Placeholder" then
             for _, element in ipairs(tab:GetChildren()) do
                 if element.ClassName == "Frame" then
-                    if element.Name ~= "SectionSpacing" and element.Name ~= "Placeholder" and not element:FindFirstChild('ColorPickerIs') then
+                    if element.Name ~= "SectionSpacing" and element.Name ~= "Placeholder" and element.Name ~= "_PinGhost_" and not element:FindFirstChild('ColorPickerIs') then
                         if element:FindFirstChild('_UIPadding_') then
                             TweenService:Create(element, TweenInfo.new(0.3, Enum.EasingStyle.Quint),
                                 { BackgroundTransparency = .25 }):Play()
@@ -2697,7 +2697,7 @@ function Minimise()
         if tab.Name ~= "Template" and tab.ClassName == "ScrollingFrame" and tab.Name ~= "Placeholder" then
             for _, element in ipairs(tab:GetChildren()) do
                 if element.ClassName == "Frame" then
-                    if element.Name ~= "SectionSpacing" and element.Name ~= "Placeholder" then
+                    if element.Name ~= "SectionSpacing" and element.Name ~= "Placeholder" and element.Name ~= "_PinGhost_" then
                         if element:FindFirstChild('_UIPadding_') then
                             TweenService:Create(element, TweenInfo.new(0.3, Enum.EasingStyle.Quint),
                                 { BackgroundTransparency = 1 }):Play()
@@ -3219,7 +3219,7 @@ function RayfieldLibrary:CreateWindow(Settings)
                     Section._UIPadding_.PaddingBottom = UDim.new(0, 4)
                     for _, element in ipairs(Section.Holder:GetChildren()) do
                         if element.ClassName == "Frame" then
-                            if element.Name ~= "SectionSpacing" and element.Name ~= "Placeholder" and element.Name ~= 'Topholder' then
+                            if element.Name ~= "SectionSpacing" and element.Name ~= "Placeholder" and element.Name ~= 'Topholder' and element.Name ~= "_PinGhost_" then
                                 if element.Name == "SectionTitle" then
                                     element.Title.TextTransparency = 1
                                 else
@@ -3256,7 +3256,7 @@ function RayfieldLibrary:CreateWindow(Settings)
                         { PaddingBottom = UDim.new(0, 4) }):Play()
                     for _, element in ipairs(Section.Holder:GetChildren()) do
                         if element.ClassName == "Frame" then
-                            if element.Name ~= "SectionSpacing" and element.Name ~= "Placeholder" and element.Name ~= 'Topholder' then
+                            if element.Name ~= "SectionSpacing" and element.Name ~= "Placeholder" and element.Name ~= 'Topholder' and element.Name ~= "_PinGhost_" then
                                 if element.Name == "SectionTitle" then
                                     TweenService:Create(element.Title, TweenInfo.new(0.3, Enum.EasingStyle.Quint),
                                         { TextTransparency = 1 }):Play()
@@ -3287,7 +3287,7 @@ function RayfieldLibrary:CreateWindow(Settings)
                         { PaddingBottom = UDim.new(0, 8) }):Play()
                     for _, element in ipairs(Section.Holder:GetChildren()) do
                         if element.ClassName == "Frame" then
-                            if element.Name ~= "SectionSpacing" and element.Name ~= "Placeholder" and element.Name ~= 'Topholder' and not element:FindFirstChild('ColorPickerIs') then
+                            if element.Name ~= "SectionSpacing" and element.Name ~= "Placeholder" and element.Name ~= 'Topholder' and element.Name ~= "_PinGhost_" and not element:FindFirstChild('ColorPickerIs') then
                                 if element.Name == "SectionTitle" then
                                     TweenService:Create(element.Title, TweenInfo.new(0.3, Enum.EasingStyle.Quint),
                                         { TextTransparency = 0 }):Play()
@@ -3691,6 +3691,16 @@ function RayfieldLibrary:CreateWindow(Settings)
                 DropdownSettings.CurrentOption = { DropdownSettings.CurrentOption[1] }
             end
 
+            -- Helper: returns the value to pass to callbacks
+            -- Single-select → string, Multi-select → table
+            local function GetCallbackValue()
+                if DropdownSettings.MultipleOptions then
+                    return DropdownSettings.CurrentOption
+                else
+                    return DropdownSettings.CurrentOption[1] or ""
+                end
+            end
+
             local function Refresh()
                 if DropdownSettings.MultipleOptions then
                     if not DropdownSettings.CurrentOption then
@@ -3714,6 +3724,12 @@ function RayfieldLibrary:CreateWindow(Settings)
             end
 
             Refresh()
+
+            -- Fire initial callback so consumers get the properly typed value
+            -- (fixes old saved data where single-select was stored as table)
+            if DropdownSettings.Callback then
+                pcall(DropdownSettings.Callback, GetCallbackValue())
+            end
 
             Dropdown.Icon.Visible = false
             if DropdownSettings.Icon then
@@ -3896,13 +3912,8 @@ function RayfieldLibrary:CreateWindow(Settings)
                         RayfieldLibrary:_ConfigSet(DropdownSettings.Flag, DropdownSettings.CurrentOption)
                     end
 
-                    local callbackValue = DropdownSettings.CurrentOption
-                    if not DropdownSettings.MultipleOptions then
-                        callbackValue = DropdownSettings.CurrentOption[1] or ""
-                    end
-
                     local Success, Response = pcall(function()
-                        DropdownSettings.Callback(callbackValue)
+                        DropdownSettings.Callback(GetCallbackValue())
                     end)
 
                     if not Success then
@@ -3970,7 +3981,7 @@ function RayfieldLibrary:CreateWindow(Settings)
                 AddInputBar.Parent = Dropdown.List
                 AddInputBar.Visible = true
                 AddInputBar.Input.PlaceholderText = DropdownSettings.CustomInputPlaceholder or
-                "Type and press Enter to add..."
+                    "Type and press Enter to add..."
                 AddInputBar.Input.Text = ""
 
                 AddInputBar.Input.FocusLost:Connect(function(enterPressed)
@@ -4033,13 +4044,8 @@ function RayfieldLibrary:CreateWindow(Settings)
                             RayfieldLibrary:_ConfigSet(DropdownSettings.Flag, DropdownSettings.CurrentOption)
                         end
 
-                        local callbackValue2 = DropdownSettings.CurrentOption
-                        if not DropdownSettings.MultipleOptions then
-                            callbackValue2 = DropdownSettings.CurrentOption[1] or ""
-                        end
-
                         local Success, Response = pcall(function()
-                            DropdownSettings.Callback(callbackValue2)
+                            DropdownSettings.Callback(GetCallbackValue())
                         end)
 
                         if not Success then
@@ -4106,13 +4112,8 @@ function RayfieldLibrary:CreateWindow(Settings)
 
                 Refresh()
 
-                local setCallbackValue = DropdownSettings.CurrentOption
-                if not DropdownSettings.MultipleOptions then
-                    setCallbackValue = DropdownSettings.CurrentOption[1] or ""
-                end
-
                 local Success, Response = pcall(function()
-                    DropdownSettings.Callback(setCallbackValue)
+                    DropdownSettings.Callback(GetCallbackValue())
                 end)
                 if not Success then
                     TweenService:Create(Dropdown, TweenInfo.new(0.6, Enum.EasingStyle.Quint),
@@ -4222,13 +4223,8 @@ function RayfieldLibrary:CreateWindow(Settings)
                                 { Transparency = 0 }):Play()
                         end
 
-                        local callbackValue4 = DropdownSettings.CurrentOption
-                        if not DropdownSettings.MultipleOptions then
-                            callbackValue4 = DropdownSettings.CurrentOption[1] or ""
-                        end
-
                         local Success, Response = pcall(function()
-                            DropdownSettings.Callback(callbackValue4)
+                            DropdownSettings.Callback(GetCallbackValue())
                         end)
 
                         if not Success then
