@@ -3727,7 +3727,8 @@ function RayfieldLibrary:CreateWindow(Settings)
 
             -- Fire initial callback so consumers get the properly typed value
             -- (fixes old saved data where single-select was stored as table)
-            if DropdownSettings.Callback then
+            -- Some consumers can opt out to avoid startup write-back overrides.
+            if DropdownSettings.Callback and not DropdownSettings.SkipInitialCallback then
                 pcall(DropdownSettings.Callback, GetCallbackValue())
             end
 
